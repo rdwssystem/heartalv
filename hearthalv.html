@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Health Monitoring Dashboard</title>
+<!-- Material Icons CDN -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    background: #0f172a; /* Dark blue background */
+    color: #e0e7ff; /* Light text */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Container for views */
+  .container {
+    max-width: 960px;
+    margin: 32px auto;
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px;
+    box-shadow:
+      0 4px 20px rgb(0 149 255 / 0.25),
+      inset 0 0 40px rgb(0 238 255 / 0.15);
+    padding: 32px 40px;
+  }
+
+  h1, h2, h3, h4 {
+    margin-top: 0;
+  }
+
+  h1 {
+    font-weight: 800;
+    font-size: 2.4rem;
+    background: linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+
+  /* Small descriptive text */
+  .small-text {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+
+  /* Heart Icon below title */
+  .heart-icon {
+    font-size: 48px;
+    color: #3b82f6;
+    margin-bottom: 32px;
+    user-select: none;
+  }
+
+  /* Navigation bar */
+  nav#main-nav {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  nav#main-nav button {
+    background: transparent;
+    border: 2px solid #22d3ee;
+    color: #22d3ee;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+  nav#main-nav button.active, 
+  nav#main-nav button:hover:not(:disabled) {
+    background: #22d3ee;
+    color: #0f172a;
+    box-shadow: 0 4px 12px #22d3eeaa;
+  }
+  nav#main-nav button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* Forms */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 420px;
+    margin: auto;
+  }
+  input[type="text"], input[type="password"], input[type="number"], select {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus {
+    outline: 2px solid #3b82f6;
+  }
+  button.submit-btn {
+    background: #3b82f6;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    user-select: none;
+  }
+  button.submit-btn:hover {
+    background: #60a5fa;
+  }
+
+  /* Error message */
+  .error-message {
+    color: #f87171;
+    font-weight: 700;
+    text-align: center;
+  }
+  .success-message {
+    color: #4ade80;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* Dashboard menu icons container */
+  .dashboard-menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+    gap: 32px;
+    justify-items: center;
+    margin-top: 32px;
+  }
+  .menu-item {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 24px 16px;
+    width: 140px;
+    box-shadow: 0 0 10px #3b82f6aa;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    user-select: none;
+    text-align: center;
+  }
+  .menu-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #3b82f6dd;
+  }
+  .menu-icon {
+    font-size: 48px;
+    color: #22d3ee;
+    margin-bottom: 12px;
+  }
+  .menu-label {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #cbd5e1;
+  }
+  
+  /* Content area inside dashboard details */
+  .dashboard-content {
+    margin-top: 32px;
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 24px 32px;
+    box-shadow: inset 0 0 15px #22d3ee55;
+  }
+  
+  /* Back button */
+  .back-btn {
+    margin-top: 24px;
+    background: transparent;
+    border: 2px solid #22d3ee;
+    color: #22d3ee;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+  }
+  .back-btn:hover {
+    background: #22d3ee;
+    color: #0f172a;
+    box-shadow: 0 4px 12px #22d3eeaa;
+  }
+  
+  /* Profile data list */
+  .profile-data {
+    list-style: none;
+    padding: 0;
+    max-width: 400px;
+    margin: 0 auto;
+    font-size: 1rem;
+    color: #a5b4fc;
+  }
+  .profile-data li {
+    margin-bottom: 12px;
+  }
+
+  /* Heart rate graph container */
+  #heartRateGraph, #dailyGraph, #monthlyProgress {
+    max-width: 700px;
+    margin: 20px auto 0 auto;
+    height: 200px;
+    background: #1e293b;
+    border-radius: 16px;
+    box-shadow: inset 0 0 12px #22d3ee55;
+  }
+
+  /* Date navigation */
+  .date-nav {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .date-nav button {
+    background: #2563eb;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  .date-nav button:hover {
+    background: #3b82f6;
+  }
+
+  /* Hide all views initially */
+  .view {
+    display: none;
+  }
+  .view.active {
+    display: block;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .container {
+      margin: 16px;
+      padding: 20px;
+    }
+    .dashboard-menu {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    #heartRateGraph, #dailyGraph, #monthlyProgress {
+      width: 100%;
+      height: 180px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <nav id="main-nav" aria-label="Main navigation">
+    <button id="nav-register" aria-controls="register-view" aria-selected="true" class="active" role="tab">Register</button>
+    <button id="nav-login" aria-controls="login-view" aria-selected="false" role="tab">Login</button>
+    <button id="nav-dashboard" aria-controls="dashboard-view" aria-selected="false" role="tab" disabled>Dashboard</button>
+  </nav>
+
+  <!-- Register View -->
+  <section id="register-view" class="view active" role="tabpanel" tabindex="0" aria-labelledby="nav-register">
+    <h2>Register</h2>
+    <form id="register-form" aria-label="Registration form">
+      <input type="text" id="reg-username" placeholder="Username (email)" required autocomplete="username" />
+      <input type="password" id="reg-password" placeholder="Password" required autocomplete="new-password" />
+      <input type="password" id="reg-confirm-password" placeholder="Konfirmasi Password" required autocomplete="new-password" />
+      <input type="text" id="reg-fullname" placeholder="Nama Lengkap" required autocomplete="name" />
+      <select id="reg-gender" required aria-label="Jenis Kelamin">
+        <option value="">Pilih Jenis Kelamin</option>
+        <option value="Laki-laki">Laki-laki</option>
+        <option value="Perempuan">Perempuan</option>
+      </select>
+      <input type="number" id="reg-age" placeholder="Umur" min="1" max="120" required />
+      <input type="text" id="reg-phone" placeholder="Nomor HP WhatsApp" pattern="^\+?\d{10,15}$" title="Masukkan nomor HP yang valid, bisa dengan +62" required autocomplete="tel" />
+      <button type="submit" class="submit-btn">Daftar</button>
+      <div id="register-error" class="error-message" role="alert"></div>
+      <div id="register-success" class="success-message" role="alert"></div>
+    </form>
+  </section>
+
+  <!-- Login View -->
+  <section id="login-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="nav-login">
+    <h2>Login</h2>
+    <form id="login-form" aria-label="Login form">
+      <input type="text" id="login-username" placeholder="Username (email)" required autocomplete="username" />
+      <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password" />
+      <button type="submit" class="submit-btn">Login</button>
+      <div id="login-error" class="error-message" role="alert"></div>
+    </form>
+  </section>
+
+  <!-- Dashboard View -->
+  <section id="dashboard-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="nav-dashboard">
+    <h1>DASHBOARD WEB CONTROL</h1>
+    <p class="small-text">Website ini dibuat untuk mempermudah mengetahui kapan kita harus bangun untuk bergerak</p>
+    <span class="material-icons heart-icon" aria-hidden="true">favorite</span>
+
+    <div class="dashboard-menu" role="list">
+      <div class="menu-item" role="listitem" tabindex="0" data-target="profile-section" aria-label="Menu Profile">
+        <span class="material-icons menu-icon">person</span>
+        <div class="menu-label">Profile</div>
+      </div>
+      <div class="menu-item" role="listitem" tabindex="0" data-target="heart-section" aria-label="Menu Heart Rate">
+        <span class="material-icons menu-icon">favorite</span>
+        <div class="menu-label">Heart Rate</div>
+      </div>
+      <div class="menu-item" role="listitem" tabindex="0" data-target="graph-section" aria-label="Menu Graph">
+        <span class="material-icons menu-icon">show_chart</span>
+        <div class="menu-label">Graph</div>
+      </div>
+      <div class="menu-item" role="listitem" tabindex="0" data-target="progress-section" aria-label="Menu Progress">
+        <span class="material-icons menu-icon">bar_chart</span>
+        <div class="menu-label">Progress</div>
+      </div>
+    </div>
+
+    <!-- Sections for each menu -->
+    <article id="profile-section" class="dashboard-content" hidden>
+      <h2>Profile</h2>
+      <ul class="profile-data" id="profile-data-list">
+        <li>Loading profile...</li>
+      </ul>
+      <button class="back-btn" aria-label="Kembali ke dashboard">Kembali ke Dashboard</button>
+    </article>
+
+    <article id="heart-section" class="dashboard-content" hidden>
+      <h2>Heart Rate</h2>
+      <canvas id="heartRateGraph" aria-label="Grafik heart rate naik turun" role="img" width="700" height="200"></canvas>
+      <p style="text-align:center; font-size: 1.4rem; margin-top: 12px;">
+        <span>Current Heart Rate: </span>
+        <strong id="currentHeartRate">--</strong> bpm
+      </p>
+      <button class="back-btn">Kembali ke Dashboard</button>
+    </article>
+
+    <article id="graph-section" class="dashboard-content" hidden>
+      <h2>Graph</h2>
+      <div class="date-nav" aria-label="Navigasi tanggal grafik">
+        <button id="prev-day" aria-label="Hari sebelumnya">&lt; Sebelumnya</button>
+        <button id="next-day" aria-label="Hari berikutnya">Selanjutnya &gt;</button>
+      </div>
+      <canvas id="dailyGraph" aria-label="Grafik rekaman harian heart rate" role="img" width="700" height="200"></canvas>
+      <button class="back-btn">Kembali ke Dashboard</button>
+    </article>
+
+    <article id="progress-section" class="dashboard-content" hidden>
+      <h2>Progress</h2>
+      <canvas id="monthlyProgress" aria-label="Diagram batang rekaman data bulanan" role="img" width="700" height="200"></canvas>
+      <button class="back-btn">Kembali ke Dashboard</button>
+    </article>
+  </section>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Your Firebase configuration (Ganti dengan config Anda)
+const firebaseConfig = {
+  apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+  authDomain: "heartalv-bbb9f.firebaseapp.com",
+  projectId: "heartalv-bbb9f",
+  storageBucket: "heartalv-bbb9f.firebasestorage.app",
+  messagingSenderId: "419949588771",
+  appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
+  measurementId: "G-8RDRRPGWMW"
+};
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // DOM references
+  const views = {
+    'register': document.getElementById('register-view'),
+    'login': document.getElementById('login-view'),
+    'dashboard': document.getElementById('dashboard-view')
+  };
+
+  const navButtons = {
+    register: document.getElementById('nav-register'),
+    login: document.getElementById('nav-login'),
+    dashboard: document.getElementById('nav-dashboard'),
+  };
+
+  // Dashboard sub-sections
+  const dashboardSections = {
+    profile: document.getElementById('profile-section'),
+    heart: document.getElementById('heart-section'),
+    graph: document.getElementById('graph-section'),
+    progress: document.getElementById('progress-section')
+  };
+
+  // Utilities for switching views
+  function switchView(view) {
+    for (const key in views) {
+      if (key === view) {
+        views[key].classList.add('active');
+        views[key].setAttribute('aria-hidden', 'false');
+        navButtons[key].classList.add('active');
+        navButtons[key].setAttribute('aria-selected', 'true');
+        navButtons[key].disabled = (key === 'dashboard' && !currentUser);
+      } else {
+        views[key].classList.remove('active');
+        views[key].setAttribute('aria-hidden', 'true');
+        navButtons[key].classList.remove('active');
+        navButtons[key].setAttribute('aria-selected', 'false');
+        navButtons[key].disabled = false;
+      }
+    }
+    clearDashboardSubViews();
+    currentDashboardSection = null;
+  }
+
+  // Manage dashboard sub-view switching
+  let currentDashboardSection = null;
+  function clearDashboardSubViews() {
+    for (const key in dashboardSections) {
+      dashboardSections[key].hidden = true;
+    }
+  }
+  function openDashboardSection(sectionKey) {
+    clearDashboardSubViews();
+    dashboardSections[sectionKey].hidden = false;
+    currentDashboardSection = sectionKey;
+  }
+
+  // Auth state
+  let currentUser = null;
+
+  // Setup nav button events
+  navButtons.register.addEventListener('click', () => switchView('register'));
+  navButtons.login.addEventListener('click', () => switchView('login'));
+
+  // Dashboard button disabled until login
+  navButtons.dashboard.addEventListener('click', () => {
+    if (currentUser) {
+      switchView('dashboard');
+      loadUserProfile();
+      loadHeartRateData();
+      loadDailyGraphData(currentDate);
+      loadMonthlyProgress();
+    }
+  });
+
+  // Register form handling
+  const registerForm = document.getElementById('register-form');
+  registerForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    clearMessages();
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const confirmPassword = document.getElementById('reg-confirm-password').value;
+    const fullName = document.getElementById('reg-fullname').value.trim();
+    const gender = document.getElementById('reg-gender').value;
+    const age = parseInt(document.getElementById('reg-age').value, 10);
+    const phone = document.getElementById('reg-phone').value.trim();
+
+    if (password !== confirmPassword) {
+      showError('register-error', "Password dan konfirmasi password tidak cocok.");
+      return;
+    }
+
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(username, password);
+      // Simpan data ke Firestore
+      await db.collection('users').doc(cred.user.uid).set({
+        fullName, gender, age, phone
+      });
+      showSuccess('register-success', "Pendaftaran berhasil! Silakan login.");
+      registerForm.reset();
+    } catch (error) {
+      showError('register-error', error.message);
+    }
+  });
+
+  // Login form handling
+  const loginForm = document.getElementById('login-form');
+  loginForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    clearMessages();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    try {
+      await auth.signInWithEmailAndPassword(username, password);
+      currentUser = auth.currentUser;
+      navButtons.dashboard.disabled = false;
+      switchView('dashboard');
+      loadUserProfile();
+      loadHeartRateData();
+      loadDailyGraphData(currentDate);
+      loadMonthlyProgress();
+    } catch (error) {
+      showError('login-error', error.message);
+    }
+  });
+
+  // Show and clear messages helpers
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+  }
+  function showSuccess(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+  }
+  function clearMessages() {
+    showError('register-error','');
+    showSuccess('register-success','');
+    showError('login-error','');
+  }
+
+  // Load user profile data in dashboard profile section
+  async function loadUserProfile() {
+    const list = document.getElementById('profile-data-list');
+    list.innerHTML = '<li>Memuat data profil...</li>';
+    if (!currentUser) return;
+    try {
+      const doc = await db.collection('users').doc(currentUser.uid).get();
+      if (!doc.exists) {
+        list.innerHTML = '<li>Data profil tidak ditemukan.</li>';
+        return;
+      }
+      const data = doc.data();
+      list.innerHTML = `
+        <li><strong>Nama Lengkap:</strong> ${data.fullName}</li>
+        <li><strong>Jenis Kelamin:</strong> ${data.gender}</li>
+        <li><strong>Umur:</strong> ${data.age}</li>
+        <li><strong>Nomor HP:</strong> ${data.phone}</li>
+      `;
+    } catch {
+      list.innerHTML = '<li>Gagal memuat data profil.</li>';
+    }
+  }
+
+  // Dashboard menu item clicking
+  document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+      openDashboardSection(item.getAttribute('data-target').replace('-section',''));
+    });
+    item.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        openDashboardSection(item.getAttribute('data-target').replace('-section',''));
+      }
+    });
+  });
+
+  // Back buttons to dashboard main menu
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearDashboardSubViews();
+      currentDashboardSection = null;
+    });
+  });
+
+  // Heart Rate Charts - using Chart.js
+  let heartChart = null;
+  const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
+
+  // Dummy data storage and streaming simulation:
+  // You can replace these with real firebase queries on 'heartRate' collection per user
+  // Each record: {timestamp: timestamp, bpm: number}
+
+  // Simulate heart rate data for current session
+  const heartRateData = [];
+  const maxPoints = 30; // show last 30 points
+
+  function addHeartRateSample(bpm) {
+    const now = new Date();
+    heartRateData.push({time: now, bpm});
+    if (heartRateData.length > maxPoints) heartRateData.shift();
+  }
+
+  // Draw chart for heart rate
+  function drawHeartChart() {
+    if(heartChart) heartChart.destroy();
+    heartChart = new Chart(heartCtx, {
+      type: 'line',
+      data: {
+        labels: heartRateData.map(d => d.time.toLocaleTimeString()),
+        datasets: [{
+          label: 'Heart Rate (bpm)',
+          data: heartRateData.map(d => d.bpm),
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34, 211, 238, 0.3)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          borderWidth: 3,
+          segment: {
+            borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee' // Red if > 100 bpm
+          }
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, suggestedMax: 150 },
+          x: { ticks: { maxRotation: 90, minRotation: 45 }}
+        },
+        plugins: {
+          legend: { display: false }
+        },
+        animation: false,
+        maintainAspectRatio: false,
+        responsive: true
+      }
+    });
+  }
+
+  // Current heart rate display element
+  const currentHeartRateEl = document.getElementById('currentHeartRate');
+
+  // Simulate live heart rate updates every 3 seconds (replace with Firebase real-time listener)
+  function simulateHeartRateStream() {
+    if(!currentUser) return;
+    const bpm = Math.floor(60 + Math.random() * 40); // random bpm 60-100
+    addHeartRateSample(bpm);
+    currentHeartRateEl.textContent = bpm;
+    drawHeartChart();
+  }
+
+  // Daily Graph & Monthly Progress graphs
+  const dailyCtx = document.getElementById('dailyGraph').getContext('2d');
+  let dailyChart = null;
+  let monthlyCtx = document.getElementById('monthlyProgress').getContext('2d');
+  let monthlyChart = null;
+
+  // For demo: simulate daily data with 24 points (hourly average bpm)
+  function generateDailyData(date) {
+    // date param for future extension, now unused
+    const data = [];
+    for(let i=0;i<24;i++){
+      data.push(Math.floor(60 + Math.random() * 40));
+    }
+    return data;
+  }
+  function drawDailyGraph(data) {
+    if(dailyChart) dailyChart.destroy();
+    dailyChart = new Chart(dailyCtx, {
+      type: 'line',
+      data: {
+        labels: [...Array(24).keys()].map(h => h+":00"),
+        datasets: [{
+          label: "Heart Rate (bpm)",
+          data,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.3)',
+          fill: true,
+          tension: 0.2,
+          pointRadius: 3,
+          borderWidth: 3
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: false, suggestedMin: 40, suggestedMax: 140 },
+          x: { }
+        },
+        plugins: { legend: { display: false }},
+        maintainAspectRatio: false,
+        responsive: true,
+        animation: false
+      }
+    });
+  }
+
+  // For demo: simulate monthly data for 30 days (average bpm per day)
+  function generateMonthlyData() {
+    const data = [];
+    for(let i=1;i<=30;i++){
+      data.push(Math.floor(60 + Math.random() * 40));
+    }
+    return data;
+  }
+  function drawMonthlyProgress(data) {
+    if(monthlyChart) monthlyChart.destroy();
+    monthlyChart = new Chart(monthlyCtx, {
+      type: 'bar',
+      data: {
+        labels: [...Array(30).keys()].map(i => (i+1).toString()),
+        datasets: [{
+          label: 'Avg Heart Rate / Day',
+          data,
+          backgroundColor: '#06b6d4'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, suggestedMax: 140 },
+          x: { }
+        },
+        plugins: { legend: { display: false }},
+        maintainAspectRatio: false,
+        responsive: true,
+        animation: false
+      }
+    });
+  }
+
+  // Date navigation state
+  let currentDate = new Date();
+  document.getElementById('prev-day').addEventListener('click', () => {
+    currentDate.setDate(currentDate.getDate()-1);
+    loadDailyGraphData(currentDate);
+  });
+  document.getElementById('next-day').addEventListener('click', () => {
+    const tomorrow = new Date();
+    tomorrow.setHours(0,0,0,0);
+    if(currentDate < tomorrow){
+      currentDate.setDate(currentDate.getDate()+1);
+      loadDailyGraphData(currentDate);
+    }
+  });
+
+  // Loaders
+  async function loadUserProfile() {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+    const list = document.getElementById('profile-data-list');
+    list.innerHTML = `
+      <li><strong>Nama Lengkap:</strong> ${data.fullName}</li>
+      <li><strong>Jenis Kelamin:</strong> ${data.gender}</li>
+      <li><strong>Umur:</strong> ${data.age}</li>
+      <li><strong>Nomor HP:</strong> ${data.phone}</li>
+    `;
+  }
+
+  // Placeholder for loading heart rate data from Firebase collection
+  function loadHeartRateData() {
+    // For demo, simulate 30 data points every 3 seconds update
+    simulateHeartRateStream();
+    if(window.heartRateInterval) clearInterval(window.heartRateInterval);
+    window.heartRateInterval = setInterval(simulateHeartRateStream, 3000);
+  }
+
+  // Load daily graph data per date
+  function loadDailyGraphData(date) {
+    const data = generateDailyData(date);
+    drawDailyGraph(data);
+  }
+
+  // Load monthly progress data
+  function loadMonthlyProgress() {
+    const data = generateMonthlyData();
+    drawMonthlyProgress(data);
+  }
+
+  // Monitor auth state
+  auth.onAuthStateChanged(user => {
+    currentUser = user;
+    if(user) {
+      navButtons.dashboard.disabled = false;
+      switchView('dashboard');
+      loadUserProfile();
+      loadHeartRateData();
+      loadDailyGraphData(currentDate);
+      loadMonthlyProgress();
+    } else {
+      navButtons.dashboard.disabled = true;
+      switchView('login');
+    }
+  });
+
+</script>
+</body>
+</html>
+
