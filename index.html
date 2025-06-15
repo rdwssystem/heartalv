@@ -33,6 +33,9 @@
       0 4px 20px rgb(0 149 255 / 0.25),
       inset 0 0 40px rgb(0 238 255 / 0.15);
     padding: 32px 40px;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
   }
 
   h1, h2, h3, h4 {
@@ -82,7 +85,7 @@
     transition: all 0.3s ease;
     user-select: none;
   }
-  nav#main-nav button.active, 
+  nav#main-nav button.active,
   nav#main-nav button:hover:not(:disabled) {
     background: #22d3ee;
     color: #0f172a;
@@ -175,11 +178,13 @@
   
   /* Content area inside dashboard details */
   .dashboard-content {
-    margin-top: 32px;
+    margin-top: 0;
     background: #0f172a;
     border-radius: 16px;
     padding: 24px 32px;
     box-shadow: inset 0 0 15px #22d3ee55;
+    flex-grow: 1;
+    overflow-y: auto;
   }
   
   /* Back button */
@@ -246,11 +251,21 @@
     background: #3b82f6;
   }
 
-  /* Hide all views initially */
+  /* Hide all main views initially */
   .view {
     display: none;
+    flex-direction: column;
+    flex-grow: 1;
   }
   .view.active {
+    display: flex;
+  }
+
+  /* Hide all dashboard sub-views initially */
+  .dashboard-subview {
+    display: none;
+  }
+  .dashboard-subview.active {
     display: block;
   }
 
@@ -277,7 +292,7 @@
   <nav id="main-nav" aria-label="Main navigation">
     <button id="nav-register" aria-controls="register-view" aria-selected="true" class="active" role="tab">Register</button>
     <button id="nav-login" aria-controls="login-view" aria-selected="false" role="tab">Login</button>
-    <button id="nav-dashboard" aria-controls="dashboard-view" aria-selected="false" role="tab" disabled>Dashboard</button>
+    <button id="nav-dashboard" aria-controls="dashboard-main-view" aria-selected="false" role="tab" disabled>Dashboard</button>
   </nav>
 
   <!-- Register View -->
@@ -312,41 +327,46 @@
     </form>
   </section>
 
-  <!-- Dashboard View -->
-  <section id="dashboard-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="nav-dashboard">
+  <!-- Dashboard Main View -->
+  <section id="dashboard-main-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="nav-dashboard">
     <h1>DASHBOARD WEB CONTROL</h1>
     <p class="small-text">Website ini dibuat untuk mempermudah mengetahui kapan kita harus bangun untuk bergerak</p>
     <span class="material-icons heart-icon" aria-hidden="true">favorite</span>
 
     <div class="dashboard-menu" role="list">
-      <div class="menu-item" role="listitem" tabindex="0" data-target="profile-section" aria-label="Menu Profile">
+      <div class="menu-item" role="listitem" tabindex="0" data-target="profile-view" aria-label="Menu Profile">
         <span class="material-icons menu-icon">person</span>
         <div class="menu-label">Profile</div>
       </div>
-      <div class="menu-item" role="listitem" tabindex="0" data-target="heart-section" aria-label="Menu Heart Rate">
+      <div class="menu-item" role="listitem" tabindex="0" data-target="heart-rate-view" aria-label="Menu Heart Rate">
         <span class="material-icons menu-icon">favorite</span>
         <div class="menu-label">Heart Rate</div>
       </div>
-      <div class="menu-item" role="listitem" tabindex="0" data-target="graph-section" aria-label="Menu Graph">
+      <div class="menu-item" role="listitem" tabindex="0" data-target="graph-view" aria-label="Menu Graph">
         <span class="material-icons menu-icon">show_chart</span>
         <div class="menu-label">Graph</div>
       </div>
-      <div class="menu-item" role="listitem" tabindex="0" data-target="progress-section" aria-label="Menu Progress">
+      <div class="menu-item" role="listitem" tabindex="0" data-target="progress-view" aria-label="Menu Progress">
         <span class="material-icons menu-icon">bar_chart</span>
         <div class="menu-label">Progress</div>
       </div>
     </div>
+  </section>
 
-    <!-- Sections for each menu -->
-    <article id="profile-section" class="dashboard-content" hidden>
+  <!-- Profile View (full screen) -->
+  <section id="profile-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="profile-menu" aria-hidden="true">
+    <div class="dashboard-content">
       <h2>Profile</h2>
       <ul class="profile-data" id="profile-data-list">
         <li>Loading profile...</li>
       </ul>
       <button class="back-btn" aria-label="Kembali ke dashboard">Kembali ke Dashboard</button>
-    </article>
+    </div>
+  </section>
 
-    <article id="heart-section" class="dashboard-content" hidden>
+  <!-- Heart Rate View (full screen) -->
+  <section id="heart-rate-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="heart-rate-menu" aria-hidden="true">
+    <div class="dashboard-content">
       <h2>Heart Rate</h2>
       <canvas id="heartRateGraph" aria-label="Grafik heart rate naik turun" role="img" width="700" height="200"></canvas>
       <p style="text-align:center; font-size: 1.4rem; margin-top: 12px;">
@@ -354,9 +374,12 @@
         <strong id="currentHeartRate">--</strong> bpm
       </p>
       <button class="back-btn">Kembali ke Dashboard</button>
-    </article>
+    </div>
+  </section>
 
-    <article id="graph-section" class="dashboard-content" hidden>
+  <!-- Graph View (full screen) -->
+  <section id="graph-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="graph-menu" aria-hidden="true">
+    <div class="dashboard-content">
       <h2>Graph</h2>
       <div class="date-nav" aria-label="Navigasi tanggal grafik">
         <button id="prev-day" aria-label="Hari sebelumnya">&lt; Sebelumnya</button>
@@ -364,14 +387,18 @@
       </div>
       <canvas id="dailyGraph" aria-label="Grafik rekaman harian heart rate" role="img" width="700" height="200"></canvas>
       <button class="back-btn">Kembali ke Dashboard</button>
-    </article>
+    </div>
+  </section>
 
-    <article id="progress-section" class="dashboard-content" hidden>
+  <!-- Progress View (full screen) -->
+  <section id="progress-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="progress-menu" aria-hidden="true">
+    <div class="dashboard-content">
       <h2>Progress</h2>
       <canvas id="monthlyProgress" aria-label="Diagram batang rekaman data bulanan" role="img" width="700" height="200"></canvas>
       <button class="back-btn">Kembali ke Dashboard</button>
-    </article>
+    </div>
   </section>
+
 </div>
 
 <!-- Firebase SDK -->
@@ -382,7 +409,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // Your Firebase configuration (Ganti dengan config Anda)
   const firebaseConfig = {
     apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
     authDomain: "heartalv-bbb9f.firebaseapp.com",
@@ -392,16 +418,18 @@
     appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
   };
 
-  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  // DOM references
   const views = {
-    'register': document.getElementById('register-view'),
-    'login': document.getElementById('login-view'),
-    'dashboard': document.getElementById('dashboard-view')
+    register: document.getElementById('register-view'),
+    login: document.getElementById('login-view'),
+    dashboardMain: document.getElementById('dashboard-main-view'),
+    profile: document.getElementById('profile-view'),
+    heartRate: document.getElementById('heart-rate-view'),
+    graph: document.getElementById('graph-view'),
+    progress: document.getElementById('progress-view')
   };
 
   const navButtons = {
@@ -410,142 +438,165 @@
     dashboard: document.getElementById('nav-dashboard'),
   };
 
-  // Dashboard sub-sections
-  const dashboardSections = {
-    profile: document.getElementById('profile-section'),
-    heart: document.getElementById('heart-section'),
-    graph: document.getElementById('graph-section'),
-    progress: document.getElementById('progress-section')
-  };
-
-  // Utilities for switching views
-  function switchView(view) {
-    for (const key in views) {
-      if (key === view) {
-        views[key].classList.add('active');
-        views[key].setAttribute('aria-hidden', 'false');
-        navButtons[key].classList.add('active');
-        navButtons[key].setAttribute('aria-selected', 'true');
-        navButtons[key].disabled = (key === 'dashboard' && !currentUser);
-      } else {
-        views[key].classList.remove('active');
-        views[key].setAttribute('aria-hidden', 'true');
-        navButtons[key].classList.remove('active');
-        navButtons[key].setAttribute('aria-selected', 'false');
-        navButtons[key].disabled = false;
-      }
-    }
-    clearDashboardSubViews();
-    currentDashboardSection = null;
-  }
-
-  // Manage dashboard sub-view switching
-  let currentDashboardSection = null;
-  function clearDashboardSubViews() {
-    for (const key in dashboardSections) {
-      dashboardSections[key].hidden = true;
-    }
-  }
-  function openDashboardSection(sectionKey) {
-    clearDashboardSubViews();
-    dashboardSections[sectionKey].hidden = false;
-    currentDashboardSection = sectionKey;
-  }
-
-  // Auth state
-  let currentUser = null;
-
-  // Setup nav button events
+  // Navigation Buttons
   navButtons.register.addEventListener('click', () => switchView('register'));
   navButtons.login.addEventListener('click', () => switchView('login'));
+  navButtons.dashboard.addEventListener('click', () => switchView('dashboardMain'));
 
-  // Dashboard button disabled until login
-  navButtons.dashboard.addEventListener('click', () => {
-    if (currentUser) {
-      switchView('dashboard');
-      loadUserProfile();
-      loadHeartRateData();
-      loadDailyGraphData(currentDate);
-      loadMonthlyProgress();
-    }
+  // Dashboard menu items
+  const menuItems = document.querySelectorAll('.menu-item');
+  menuItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.getAttribute('data-target').replace('-view','');
+      openDashboardMenu(target);
+    });
+    item.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const target = item.getAttribute('data-target').replace('-view','');
+        openDashboardMenu(target);
+      }
+    });
   });
 
-  // Register form handling
-  const registerForm = document.getElementById('register-form');
-  registerForm.addEventListener('submit', async e => {
+  // Back buttons in menu views
+  const backBtns = document.querySelectorAll('.back-btn');
+  backBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchView('dashboardMain');
+    });
+  });
+
+  let currentUser = null;
+
+  // View switching logic
+  function switchView(viewKey) {
+    // Show only the selected view, hide others
+    Object.values(views).forEach(v => {
+      v.classList.remove('active');
+      v.setAttribute('aria-hidden', 'true');
+    });
+    if(viewKey === 'dashboardMain' || viewKey === 'register' || viewKey === 'login') {
+      views[viewKey].classList.add('active');
+      views[viewKey].setAttribute('aria-hidden', 'false');
+    }
+    // Show or hide nav buttons based on auth state and view    
+    if(currentUser) {
+      // After login: show only Dashboard nav, hide Register/Login
+      if(viewKey.startsWith('dashboard')) {
+        navButtons.register.style.display = 'none';
+        navButtons.login.style.display = 'none';
+        navButtons.dashboard.style.display = 'inline-block';
+        navButtons.dashboard.disabled = false;
+      } else {
+        // If somehow in register/login view but user is logged in, force dashboard view
+        switchView('dashboardMain');
+      }
+    } else {
+      // Not logged in: show Register/Login, disable dashboard button
+      navButtons.register.style.display = 'inline-block';
+      navButtons.login.style.display = 'inline-block';
+      navButtons.dashboard.style.display = 'inline-block';
+      navButtons.dashboard.disabled = true;
+    }
+
+    // Also hide all dashboard sub views upon switching main views
+    Object.keys(views).forEach(key => {
+      if(key !== 'register' && key !== 'login' && key !== 'dashboardMain') {
+        views[key].classList.remove('active');
+        views[key].setAttribute('aria-hidden', 'true');
+      }
+    });
+  }
+
+  // Open full screen menu from dashboard
+  function openDashboardMenu(menuKey) {
+    // Hide dashboard main view and show menu view
+    views.dashboardMain.classList.remove('active');
+    views.dashboardMain.setAttribute('aria-hidden', 'true');
+    if(views[menuKey]) {
+      Object.keys(views).forEach(key => {
+        if(key !== menuKey) {
+          views[key].classList.remove('active');
+          views[key].setAttribute('aria-hidden', 'true');
+        }
+      });
+      views[menuKey].classList.add('active');
+      views[menuKey].setAttribute('aria-hidden', 'false');
+      // Load content for menu
+      if(menuKey === 'profile') loadUserProfile();
+      else if(menuKey === 'heartRate') loadHeartRateData();
+      else if(menuKey === 'graph') loadDailyGraphData(currentDate);
+      else if(menuKey === 'progress') loadMonthlyProgress();
+    }
+  }
+
+  // Registration form
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     clearMessages();
     const username = document.getElementById('reg-username').value.trim();
     const password = document.getElementById('reg-password').value;
-    const confirmPassword = document.getElementById('reg-confirm-password').value;
+    const confirm = document.getElementById('reg-confirm-password').value;
     const fullName = document.getElementById('reg-fullname').value.trim();
     const gender = document.getElementById('reg-gender').value;
     const age = parseInt(document.getElementById('reg-age').value, 10);
     const phone = document.getElementById('reg-phone').value.trim();
 
-    if (password !== confirmPassword) {
-      showError('register-error', "Password dan konfirmasi password tidak cocok.");
+    if(password !== confirm) {
+      showError('register-error', 'Password dan konfirmasi password tidak cocok.');
       return;
     }
-
     try {
       const cred = await auth.createUserWithEmailAndPassword(username, password);
-      // Simpan data ke Firestore
-      await db.collection('users').doc(cred.user.uid).set({
-        fullName, gender, age, phone
-      });
-      showSuccess('register-success', "Pendaftaran berhasil! Silakan login.");
-      registerForm.reset();
-    } catch (error) {
-      showError('register-error', error.message);
+      await db.collection('users').doc(cred.user.uid).set({ fullName, gender, age, phone });
+      showSuccess('register-success', 'Pendaftaran berhasil! Silakan login.');
+      e.target.reset();
+    } catch(err) {
+      showError('register-error', err.message);
     }
   });
 
-  // Login form handling
-  const loginForm = document.getElementById('login-form');
-  loginForm.addEventListener('submit', async e => {
+  // Login form
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     clearMessages();
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
-
     try {
       await auth.signInWithEmailAndPassword(username, password);
       currentUser = auth.currentUser;
       navButtons.dashboard.disabled = false;
-      switchView('dashboard');
+      switchView('dashboardMain');
       loadUserProfile();
       loadHeartRateData();
       loadDailyGraphData(currentDate);
       loadMonthlyProgress();
-    } catch (error) {
-      showError('login-error', error.message);
+    } catch(err) {
+      showError('login-error', err.message);
     }
   });
 
-  // Show and clear messages helpers
+  function clearMessages() {
+    showError('register-error', '');
+    showSuccess('register-success', '');
+    showError('login-error', '');
+  }
   function showError(id, msg) {
-    const el = document.getElementById(id);
-    el.textContent = msg;
+    document.getElementById(id).textContent = msg;
   }
   function showSuccess(id, msg) {
-    const el = document.getElementById(id);
-    el.textContent = msg;
-  }
-  function clearMessages() {
-    showError('register-error','');
-    showSuccess('register-success','');
-    showError('login-error','');
+    document.getElementById(id).textContent = msg;
   }
 
-  // Load user profile data in dashboard profile section
+  // Load user profile
   async function loadUserProfile() {
     const list = document.getElementById('profile-data-list');
     list.innerHTML = '<li>Memuat data profil...</li>';
-    if (!currentUser) return;
+    if(!currentUser) return;
     try {
       const doc = await db.collection('users').doc(currentUser.uid).get();
-      if (!doc.exists) {
+      if(!doc.exists) {
         list.innerHTML = '<li>Data profil tidak ditemukan.</li>';
         return;
       }
@@ -561,46 +612,18 @@
     }
   }
 
-  // Dashboard menu item clicking
-  document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', () => {
-      openDashboardSection(item.getAttribute('data-target').replace('-section',''));
-    });
-    item.addEventListener('keydown', e => {
-      if(e.key === 'Enter' || e.key === ' '){
-        e.preventDefault();
-        openDashboardSection(item.getAttribute('data-target').replace('-section',''));
-      }
-    });
-  });
-
-  // Back buttons to dashboard main menu
-  document.querySelectorAll('.back-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      clearDashboardSubViews();
-      currentDashboardSection = null;
-    });
-  });
-
-  // Heart Rate Charts - using Chart.js
+  // Heart rate chart (Chart.js)
   let heartChart = null;
   const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
-
-  // Dummy data storage and streaming simulation:
-  // You can replace these with real firebase queries on 'heartRate' collection per user
-  // Each record: {timestamp: timestamp, bpm: number}
-
-  // Simulate heart rate data for current session
   const heartRateData = [];
-  const maxPoints = 30; // show last 30 points
+  const maxPoints = 30;
+  const currentHeartRateEl = document.getElementById('currentHeartRate');
 
   function addHeartRateSample(bpm) {
     const now = new Date();
-    heartRateData.push({time: now, bpm});
+    heartRateData.push({ time: now, bpm });
     if (heartRateData.length > maxPoints) heartRateData.shift();
   }
-
-  // Draw chart for heart rate
   function drawHeartChart() {
     if(heartChart) heartChart.destroy();
     heartChart = new Chart(heartCtx, {
@@ -618,7 +641,7 @@
           pointHoverRadius: 6,
           borderWidth: 3,
           segment: {
-            borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee' // Red if > 100 bpm
+            borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee'
           }
         }]
       },
@@ -627,41 +650,36 @@
           y: { beginAtZero: true, suggestedMax: 150 },
           x: { ticks: { maxRotation: 90, minRotation: 45 }}
         },
-        plugins: {
-          legend: { display: false }
-        },
+        plugins: { legend: { display: false }},
         animation: false,
         maintainAspectRatio: false,
         responsive: true
       }
     });
   }
-
-  // Current heart rate display element
-  const currentHeartRateEl = document.getElementById('currentHeartRate');
-
-  // Simulate live heart rate updates every 3 seconds (replace with Firebase real-time listener)
   function simulateHeartRateStream() {
     if(!currentUser) return;
-    const bpm = Math.floor(60 + Math.random() * 40); // random bpm 60-100
+    const bpm = Math.floor(60 + Math.random() * 40);
     addHeartRateSample(bpm);
     currentHeartRateEl.textContent = bpm;
     drawHeartChart();
   }
+  function loadHeartRateData() {
+    simulateHeartRateStream();
+    if(window.heartRateInterval) clearInterval(window.heartRateInterval);
+    window.heartRateInterval = setInterval(simulateHeartRateStream, 3000);
+  }
 
-  // Daily Graph & Monthly Progress graphs
+  // Daily and monthly charts
   const dailyCtx = document.getElementById('dailyGraph').getContext('2d');
   let dailyChart = null;
-  let monthlyCtx = document.getElementById('monthlyProgress').getContext('2d');
+  const monthlyCtx = document.getElementById('monthlyProgress').getContext('2d');
   let monthlyChart = null;
+  let currentDate = new Date();
 
-  // For demo: simulate daily data with 24 points (hourly average bpm)
-  function generateDailyData(date) {
-    // date param for future extension, now unused
+  function generateDailyData() {
     const data = [];
-    for(let i=0;i<24;i++){
-      data.push(Math.floor(60 + Math.random() * 40));
-    }
+    for(let i=0;i<24;i++) data.push(Math.floor(60 + Math.random()*40));
     return data;
   }
   function drawDailyGraph(data) {
@@ -669,7 +687,7 @@
     dailyChart = new Chart(dailyCtx, {
       type: 'line',
       data: {
-        labels: [...Array(24).keys()].map(h => h+":00"),
+        labels: [...Array(24).keys()].map(i => i+":00"),
         datasets: [{
           label: "Heart Rate (bpm)",
           data,
@@ -684,7 +702,7 @@
       options: {
         scales: {
           y: { beginAtZero: false, suggestedMin: 40, suggestedMax: 140 },
-          x: { }
+          x: {}
         },
         plugins: { legend: { display: false }},
         maintainAspectRatio: false,
@@ -693,13 +711,14 @@
       }
     });
   }
+  function loadDailyGraphData() {
+    const data = generateDailyData();
+    drawDailyGraph(data);
+  }
 
-  // For demo: simulate monthly data for 30 days (average bpm per day)
   function generateMonthlyData() {
     const data = [];
-    for(let i=1;i<=30;i++){
-      data.push(Math.floor(60 + Math.random() * 40));
-    }
+    for(let i=1;i<=30;i++) data.push(Math.floor(60 + Math.random()*40));
     return data;
   }
   function drawMonthlyProgress(data) {
@@ -717,7 +736,7 @@
       options: {
         scales: {
           y: { beginAtZero: true, suggestedMax: 140 },
-          x: { }
+          x: {}
         },
         plugins: { legend: { display: false }},
         maintainAspectRatio: false,
@@ -726,9 +745,11 @@
       }
     });
   }
+  function loadMonthlyProgress() {
+    const data = generateMonthlyData();
+    drawMonthlyProgress(data);
+  }
 
-  // Date navigation state
-  let currentDate = new Date();
   document.getElementById('prev-day').addEventListener('click', () => {
     currentDate.setDate(currentDate.getDate()-1);
     loadDailyGraphData(currentDate);
@@ -742,46 +763,12 @@
     }
   });
 
-  // Loaders
-  async function loadUserProfile() {
-    const doc = await db.collection('users').doc(currentUser.uid).get();
-    if (!doc.exists) return;
-    const data = doc.data();
-    const list = document.getElementById('profile-data-list');
-    list.innerHTML = `
-      <li><strong>Nama Lengkap:</strong> ${data.fullName}</li>
-      <li><strong>Jenis Kelamin:</strong> ${data.gender}</li>
-      <li><strong>Umur:</strong> ${data.age}</li>
-      <li><strong>Nomor HP:</strong> ${data.phone}</li>
-    `;
-  }
-
-  // Placeholder for loading heart rate data from Firebase collection
-  function loadHeartRateData() {
-    // For demo, simulate 30 data points every 3 seconds update
-    simulateHeartRateStream();
-    if(window.heartRateInterval) clearInterval(window.heartRateInterval);
-    window.heartRateInterval = setInterval(simulateHeartRateStream, 3000);
-  }
-
-  // Load daily graph data per date
-  function loadDailyGraphData(date) {
-    const data = generateDailyData(date);
-    drawDailyGraph(data);
-  }
-
-  // Load monthly progress data
-  function loadMonthlyProgress() {
-    const data = generateMonthlyData();
-    drawMonthlyProgress(data);
-  }
-
   // Monitor auth state
   auth.onAuthStateChanged(user => {
     currentUser = user;
     if(user) {
       navButtons.dashboard.disabled = false;
-      switchView('dashboard');
+      switchView('dashboardMain');
       loadUserProfile();
       loadHeartRateData();
       loadDailyGraphData(currentDate);
@@ -791,10 +778,7 @@
       switchView('login');
     }
   });
-
 </script>
 </body>
 </html>
-
-
 
