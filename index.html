@@ -426,6 +426,8 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+    const rtdb = firebase.database();
+  const currentHeartRateEl = document.getElementById("currentHeartRate");
 
   const views = {
     register: document.getElementById('register-view'),
