@@ -200,3 +200,78 @@ document.getElementById(page).style.display = 'block';
             const whatsappNumber = this[6].value;
             if (password !== confirmPassword) {
                 alert("Password dan konfirmasi password tidak cocok!");
+                            document.getElementById(page).style.display = 'block';
+        }
+
+        // Event listener untuk navigasi
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const target = this.getAttribute('href').substring(1);
+                showPage(target);
+            });
+        });
+
+        // Fungsi untuk menangani pendaftaran
+        document.getElementById('registerForm')?.addEventListener('submit', function(event) {
+            event.preventDefault();
+            // Ambil data dari form dan simpan ke Firebase
+            const username = this[0].value;
+            const password = this[1].value;
+            const confirmPassword = this[2].value;
+            const fullName = this[3].value;
+            const gender = this[4].value;
+            const age = this[5].value;
+            const whatsappNumber = this[6].value;
+
+            if (password !== confirmPassword) {
+                alert("Password dan konfirmasi password tidak cocok!");
+                return;
+            }
+
+            // Simpan data ke Firebase (implementasi sesuai kebutuhan)
+            console.log("Data pendaftaran:", { username, password, fullName, gender, age, whatsappNumber });
+            alert("Pendaftaran berhasil! Silakan login.");
+            showPage('login');
+        });
+
+        // Fungsi untuk menangani login
+        document.getElementById('loginForm')?.addEventListener('submit', function(event) {
+            event.preventDefault();
+            // Ambil data dari form dan verifikasi dengan Firebase
+            const username = this[0].value;
+            const password = this[1].value;
+
+            // Verifikasi login (implementasi sesuai kebutuhan)
+            console.log("Data login:", { username, password });
+            alert("Login berhasil! Selamat datang di Dashboard.");
+            showPage('dashboard');
+        });
+
+        // Fungsi untuk menampilkan data di dashboard
+        document.getElementById('profile')?.addEventListener('click', function() {
+            alert("Menampilkan data profile...");
+            // Implementasi untuk menampilkan data profile
+        });
+
+        document.getElementById('heartRate')?.addEventListener('click', function() {
+            alert("Menampilkan data heart rate...");
+            // Implementasi untuk menampilkan data heart rate
+        });
+
+        document.getElementById('graph')?.addEventListener('click', function() {
+            alert("Menampilkan grafik...");
+            // Implementasi untuk menampilkan grafik
+        });
+
+        document.getElementById('progress')?.addEventListener('click', function() {
+            alert("Menampilkan diagram batang...");
+            // Implementasi untuk menampilkan diagram batang
+        });
+
+        // Tampilkan halaman utama saat pertama kali dibuka
+        showPage('home');
+    </script>
+</body>
+</html>
+
