@@ -222,15 +222,13 @@
   /* Heart rate graph container */
   #heartRateGraph, #dailyGraph, #monthlyProgress {
     max-width: 700px;
-     max-height: 400px;
+    max-height: 400px;
     margin: 20px auto 0 auto;
     height: 200px;
     background: #1e293b;
     border-radius: 16px;
     box-shadow: inset 0 0 12px #22d3ee55;
   }
-
-
 
   /* Date navigation */
   .date-nav {
@@ -424,11 +422,10 @@
   appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
 };
 
-
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
-    const rtdb = firebase.database();
+  const rtdb = firebase.database();
   const currentHeartRateEl = document.getElementById("currentHeartRate");
 
   const views = {
@@ -450,8 +447,7 @@
   // Navigation Buttons
   navButtons.register.addEventListener('click', () => switchView('register'));
   navButtons.login.addEventListener('click', () => switchView('login'));
-  navButtons.dashboard.addEventListener('click', () => switchView('dashboardMain'));
-
+  navButtons.dashboard.addEventListener('click', () => switch
   // Dashboard menu items
   const menuItems = document.querySelectorAll('.menu-item');
   menuItems.forEach(item => {
