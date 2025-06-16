@@ -408,6 +408,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -627,39 +629,41 @@
     heartRateData.push({ time: now, bpm });
     if (heartRateData.length > maxPoints) heartRateData.shift();
   }
-  function drawHeartChart() {
-    if(heartChart) heartChart.destroy();
-    heartChart = new Chart(heartCtx, {
-      type: 'line',
-      data: {
-        labels: heartRateData.map(d => d.time.toLocaleTimeString()),
-        datasets: [{
-          label: 'Heart Rate (bpm)',
-          data: heartRateData.map(d => d.bpm),
-          borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34, 211, 238, 0.3)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          borderWidth: 3,
-          segment: {
-            borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee'
-          }
-        }]
+  
+  function updateHeartChart(labels, data) {
+  if (heartChart) heartChart.destroy();
+  heartChart = new Chart(heartCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Heart Rate (bpm)',
+        data: data,
+        borderColor: '#22d3ee',
+        backgroundColor: 'rgba(34, 211, 238, 0.3)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        borderWidth: 3,
+        segment: {
+          borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee'
+        }
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, suggestedMax: 150 },
+        x: { ticks: { maxRotation: 90, minRotation: 45 } }
       },
-      options: {
-        scales: {
-          y: { beginAtZero: true, suggestedMax: 150 },
-          x: { ticks: { maxRotation: 90, minRotation: 45 }}
-        },
-        plugins: { legend: { display: false }},
-        animation: false,
-        maintainAspectRatio: false,
-        responsive: true
-      }
-    });
-  }
+      plugins: { legend: { display: false } },
+      animation: false,
+      maintainAspectRatio: false,
+      responsive: true
+    }
+  });
+}
+
   function simulateHeartRateStream() {
     if(!currentUser) return;
     const bpm = Math.floor(60 + Math.random() * 40);
@@ -667,8 +671,8 @@
     currentHeartRateEl.textContent = bpm;
     drawHeartChart();
   }
-  function loadHeartRateData() {
-    simulateHeartRateStream();
+function loadHeartRateData() {
+  loadHeartRateRealtime(); // ambil data realtime
     if(window.heartRateInterval) clearInterval(window.heartRateInterval);
     window.heartRateInterval = setInterval(simulateHeartRateStream, 3000);
   }
@@ -781,6 +785,30 @@
       switchView('login');
     }
   });
+  const rtdb = firebase.database();
+
+// Fungsi untuk ambil data heart rate dari Realtime Database
+function loadHeartRateRealtime() {
+  const heartRatePath = "heartRateData/4a9941";  // Ganti dengan deviceId kamu
+
+  rtdb.ref(heartRatePath).on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      console.log("Tidak ada data detak jantung.");
+      return;
+    }
+
+    // Ambil dan urutkan data berdasarkan waktu
+    const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+    const labels = entries.map(([time, _]) => `${time}:00`);
+    const bpmData = entries.map(([_, bpm]) => bpm);
+
+    // Tampilkan di elemen HTML
+    currentHeartRateEl.textContent = bpmData[bpmData.length - 1]; // tampilkan yang terakhir
+    updateHeartChart(labels, bpmData);
+  });
+}
+
 </script>
 </body>
 </html>
