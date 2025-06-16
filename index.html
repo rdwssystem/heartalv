@@ -385,6 +385,19 @@
       <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
     </div>
   </section>
+  
+  <section id="heart-rate-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="heart-rate-menu" aria-hidden="true">
+  <div class="dashboard-content">
+    <h2>Heart Rate Monitor</h2>
+    <div class="heart-rate-display">
+      <span>Detak Jantung: </span>
+      <span id="currentHeartRate" class="bpm-value">--</span>
+      <span> BPM</span>
+    </div>
+    <canvas id="heartRateGraph" width="700" height="300"></canvas>
+    <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
+  </div>
+</section>
 
 </div>
 
@@ -598,7 +611,7 @@ const firebaseConfig = {
   let heartChart = null;
   let dailyChart = null;
   let monthlyChart = null;
-
+let heartRateRef = null;  // <-- INI DITARUH DI SINI
   async function loadUserProfile() {
     const list = document.getElementById('profile-data-list');
     list.innerHTML = '<li>Memuat data profil...</li>';
@@ -624,77 +637,105 @@ const firebaseConfig = {
     }
   }
 
-function loadHeartRateRealtime() {
-  const deviceId = "4a9941"; // Ganti sesuai device
-  const heartRatePath = "heartRateData/" + deviceId;
 
-  rtdb.ref(heartRatePath)
-    .orderByKey()
-    .limitToLast(20) // Ambil 20 data terakhir
-    .on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        console.log("Data kosong");
-        return;
-      }
-
-      // Urutkan berdasarkan timestamp jam
-      const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-
-      const labels = entries.map(([time]) => `${time}:00`);
-      const bpms = entries.map(([_, bpm]) => bpm);
-
-      // Tampilkan yang terakhir
-      currentHeartRateEl.textContent = bpms[bpms.length - 1];
-      updateHeartChart(labels, bpms);
-    });
-}
-
-  
-  function loadHeartRateData() {
-    const currentHeartRateEl = document.getElementById('currentHeartRate');
+ function loadHeartRateData() {
     const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
+    const currentHeartRateEl = document.getElementById('currentHeartRate');
     
-    // Simulate real-time data (replace with actual Firebase RTDB implementation)
-    const labels = Array.from({length: 30}, (_, i) => `${i}s`);
-    const data = Array.from({length: 30}, () => Math.floor(60 + Math.random() * 40));
+    // Inisialisasi data EKG
+    let ekgData = Array(100).fill(80); // Baseline 80 BPM
     
-    // Update current heart rate display
-    currentHeartRateEl.textContent = data[data.length - 1];
-    
-    // Create or update chart
+    // Buat grafik EKG
     if(heartChart) heartChart.destroy();
     
     heartChart = new Chart(heartCtx, {
       type: 'line',
       data: {
-        labels: labels,
+        labels: Array(100).fill(''),
         datasets: [{
-          label: 'Heart Rate (bpm)',
-          data: data,
+          label: 'EKG',
+          data: ekgData,
           borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34, 211, 238, 0.3)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3,
-          borderWidth: 3,
-          segment: {
-            borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee'
-          }
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.1
         }]
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: false, suggestedMin: 50, suggestedMax: 150 },
-          x: { display: true }
+          y: {
+            min: 50,
+            max: 150,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              stepSize: 20
+            }
+          },
+          x: {
+            display: false
+          }
         },
-        plugins: { legend: { display: false } },
-        animation: false,
-        maintainAspectRatio: false
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        animation: {
+          duration: 0
+        }
       }
     });
-  }
 
+    // Panggil fungsi untuk setup realtime data
+    setupRealTimeHeartRate();
+
+    // Fungsi untuk koneksi ke Firebase RTDB
+    function setupRealTimeHeartRate() {
+      if(!currentUser) return;
+      
+      const deviceId = "4a9941"; // Ganti dengan device ID user
+      const heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
+      
+      heartRateRef.on('value', (snapshot) => {
+        const bpm = snapshot.val();
+        if(bpm !== null) {
+          updateEKGChart(bpm);
+          currentHeartRateEl.textContent = bpm;
+          
+          // Warna berbeda jika detak jantung tinggi
+          if(bpm > 100) {
+            heartChart.data.datasets[0].borderColor = '#f87171';
+            currentHeartRateEl.style.color = '#f87171';
+          } else {
+            heartChart.data.datasets[0].borderColor = '#22d3ee';
+            currentHeartRateEl.style.color = '#22d3ee';
+          }
+        }
+      });
+    }
+
+    // Fungsi untuk update grafik EKG
+    function updateEKGChart(bpm) {
+      // Generate pola EKG berdasarkan BPM
+      const ekgPattern = [
+        bpm - 5,  // P wave
+        bpm,      // PR segment
+        bpm + 20, // QRS complex
+        bpm - 10, // ST segment
+        bpm + 5   // T wave
+      ];
+      
+      // Update data grafik
+      ekgData = [...ekgData.slice(1), ...ekgPattern];
+      heartChart.data.datasets[0].data = ekgData;
+      heartChart.update('none');
+    }
+}
   function loadDailyGraphData() {
     const dailyCtx = document.getElementById('dailyGraph').getContext('2d');
     
