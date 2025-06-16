@@ -399,14 +399,16 @@
 
 <script>
   // Firebase Configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
-    authDomain: "heartalv-bbb9f.firebaseapp.com",
-    projectId: "heartalv-bbb9f",
-    storageBucket: "heartalv-bbb9f.appspot.com",
-    messagingSenderId: "419949588771",
-    appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+  authDomain: "heartalv-bbb9f.firebaseapp.com",
+  databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app", // WAJIB ADA
+  projectId: "heartalv-bbb9f",
+  storageBucket: "heartalv-bbb9f.appspot.com",
+  messagingSenderId: "419949588771",
+  appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
+};
+
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
