@@ -681,51 +681,46 @@
     });
 
     // Setup realtime data listener
-    setupRealTimeHeartRate();
+function setupRealTimeHeartRate() {
+  if (!currentUser) return;
+  
+  // Hapus listener sebelumnya jika ada
+  if (heartRateRef) {
+    heartRateRef.off();
+  }
 
-    // Fungsi untuk koneksi ke Firebase RTDB
-    function setupRealTimeHeartRate() {
-      if(!currentUser) return;
-      
-      // Hapus listener sebelumnya jika ada
-      if(heartRateRef) {
-        heartRateRef.off();
-      }
-      // Simulasi kirim data BPM setiap 1 detik (jika user sudah login)
+  const deviceId = "demo-device"; // Ganti dengan device ID user
+  heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
 
-      const deviceId = "demo-device"; // Ganti dengan device ID user
-      heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
-      if (currentUser) {
+  // Simulasi kirim data BPM setiap 1 detik
   setInterval(() => {
     const bpm = 70 + Math.floor(Math.random() * 20); // BPM acak 70-90
-    heartRateRef.set(bpm); // Kirim ke Firebase
-    console.log("Data BPM dikirim:", bpm); // Cek di Console
+    heartRateRef.set(bpm);
+    console.log("Data BPM dikirim:", bpm);
   }, 1000);
-}
-      heartRateRef.on('value', (snapshot) => {
-        const bpm = snapshot.val();
-        if(bpm !== null) {
-          updateEKGChart(bpm);
-          currentHeartRateEl.textContent = bpm;
-          
-          // Warna berbeda jika detak jantung tinggi
-          if(bpm > 100) {
-            heartChart.data.datasets[0].borderColor = '#f87171';
-            currentHeartRateEl.style.color = '#f87171';
-          } else {
-            heartChart.data.datasets[0].borderColor = '#22d3ee';
-            currentHeartRateEl.style.color = '#22d3ee';
-          }
-        }
-        heartRateRef.on('value', (snapshot) => {
-  console.log("Data diterima dari Firebase:", snapshot.val()); // Harus muncul di Console
-  if (snapshot.exists()) {
-    updateEKGChart(snapshot.val());
-  } else {
-    console.warn("Data di Firebase kosong!");
-  }
-      });
+
+  // Listener untuk data realtime
+  heartRateRef.on('value', (snapshot) => {
+    const bpm = snapshot.val();
+    console.log("Data diterima dari Firebase:", bpm);
+    
+    if (bpm !== null) {
+      updateEKGChart(bpm);
+      currentHeartRateEl.textContent = bpm;
+      
+      // Warna berbeda jika detak jantung tinggi
+      if (bpm > 100) {
+        heartChart.data.datasets[0].borderColor = '#f87171';
+        currentHeartRateEl.style.color = '#f87171';
+      } else {
+        heartChart.data.datasets[0].borderColor = '#22d3ee';
+        currentHeartRateEl.style.color = '#22d3ee';
+      }
+    } else {
+      console.warn("Data di Firebase kosong!");
     }
+  });
+}
 
     // Fungsi untuk update grafik EKG
     function updateEKGChart(bpm) {
