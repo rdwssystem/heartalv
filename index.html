@@ -1,277 +1,757 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Monitoring</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #1d1d1d, #3a3a3a);
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Health Monitoring Dashboard</title>
+<!-- Material Icons CDN -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-        }
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    background: #0f172a;
+    color: #e0e7ff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
-        nav a {
-            margin: 0 15px;
-            text-decoration: none;
-            color: #00ffcc;
-            transition: color 0.3s;
-        }
+  .container {
+    max-width: 960px;
+    margin: 32px auto;
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px;
+    box-shadow:
+      0 4px 20px rgb(0 149 255 / 0.25),
+      inset 0 0 40px rgb(0 238 255 / 0.15);
+    padding: 32px 40px;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+  }
 
-        nav a:hover {
-            color: #ffcc00;
-        }
+  h1, h2, h3, h4 {
+    margin-top: 0;
+  }
 
-        form {
-            display: flex;
-            flex-direction: column;
-            max-width: 400px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
+  h1 {
+    font-weight: 800;
+    font-size: 2.4rem;
+    background: linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
 
-        input, select, button {
-            margin: 10px 0;
-            padding: 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-        }
+  .small-text {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
 
-        input, select {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
+  .heart-icon {
+    font-size: 48px;
+    color: #3b82f6;
+    margin-bottom: 32px;
+    user-select: none;
+  }
 
-        button {
-            background: #00ffcc;
-            color: #000;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
+  nav#main-nav {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  nav#main-nav button {
+    background: transparent;
+    border: 2px solid #22d3ee;
+    color: #22d3ee;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+  nav#main-nav button.active,
+  nav#main-nav button:hover:not(:disabled) {
+    background: #22d3ee;
+    color: #0f172a;
+    box-shadow: 0 4px 12px #22d3eeaa;
+  }
+  nav#main-nav button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 
-        button:hover {
-            background: #ffcc00;
-        }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 420px;
+    margin: auto;
+  }
+  input[type="text"], input[type="password"], input[type="number"], select {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus {
+    outline: 2px solid #3b82f6;
+  }
+  button.submit-btn {
+    background: #3b82f6;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    user-select: none;
+  }
+  button.submit-btn:hover {
+    background: #60a5fa;
+  }
 
-        .menu {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-            width: 100%;
-        }
+  .error-message {
+    color: #f87171;
+    font-weight: 700;
+    text-align: center;
+  }
+  .success-message {
+    color: #4ade80;
+    font-weight: 700;
+    text-align: center;
+  }
 
-        .icon {
-            padding: 20px;
-            border: 1px solid #00ffcc;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
+  .dashboard-menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+    gap: 32px;
+    justify-items: center;
+    margin-top: 32px;
+  }
+  .menu-item {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 24px 16px;
+    width: 140px;
+    box-shadow: 0 0 10px #3b82f6aa;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    user-select: none;
+    text-align: center;
+  }
+  .menu-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #3b82f6dd;
+  }
+  .menu-icon {
+    font-size: 48px;
+    color: #22d3ee;
+    margin-bottom: 12px;
+  }
+  .menu-label {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #cbd5e1;
+  }
+  
+  .dashboard-content {
+    margin-top: 0;
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 24px 32px;
+    box-shadow: inset 0 0 15px #22d3ee55;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  
+  .back-btn {
+    margin-top: 24px;
+    background: transparent;
+    border: 2px solid #22d3ee;
+    color: #22d3ee;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+  }
+  .back-btn:hover {
+    background: #22d3ee;
+    color: #0f172a;
+    box-shadow: 0 4px 12px #22d3eeaa;
+  }
+  
+  .profile-data {
+    list-style: none;
+    padding: 0;
+    max-width: 400px;
+    margin: 0 auto;
+    font-size: 1rem;
+    color: #a5b4fc;
+  }
+  .profile-data li {
+    margin-bottom: 12px;
+  }
 
-        .icon:hover {
-            transform: scale(1.05);
-            background: rgba(255, 255, 255, 0.1);
-        }
+  #heartRateGraph, #dailyGraph, #monthlyProgress {
+    max-width: 700px;
+    max-height: 400px;
+    margin: 20px auto 0 auto;
+    height: 200px;
+    background: #1e293b;
+    border-radius: 16px;
+    box-shadow: inset 0 0 12px #22d3ee55;
+  }
 
-        .description {
-            font-size: 0.8em;
-            margin-bottom: 20px;
-        }
-    </style>
+  .date-nav {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .date-nav button {
+    background: #2563eb;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  .date-nav button:hover {
+    background: #3b82f6;
+  }
+
+  .view {
+    display: none;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  .view.active {
+    display: flex;
+  }
+
+  .dashboard-subview {
+    display: none;
+  }
+  .dashboard-subview.active {
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    .container {
+      margin: 16px;
+      padding: 20px;
+    }
+    .dashboard-menu {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    #heartRateGraph, #dailyGraph, #monthlyProgress {
+      width: 100%;
+      height: 180px;
+    }
+  }
+</style>
 </head>
 <body>
+<div class="container">
 
-    <div id="app">
-        <div id="home">
-            <h1>Selamat Datang di Website Pemantauan Kesehatan</h1>
-            <nav>
-                <a href="#register">Register</a>
-                <a href="#login">Login</a>
-            </nav>
-        </div>
+  <nav id="main-nav" aria-label="Main navigation">
+    <button id="nav-register" aria-controls="register-view" aria-selected="true" class="active" role="tab">Register</button>
+    <button id="nav-login" aria-controls="login-view" aria-selected="false" role="tab">Login</button>
+    <button id="nav-dashboard" aria-controls="dashboard-main-view" aria-selected="false" role="tab" disabled>Dashboard</button>
+  </nav>
 
-        <div id="register" style="display: none;">
-            <h1>Register</h1>
-            <form id="registerForm">
-                <input type="text" placeholder="Username" required>
-                <input type="password" placeholder="Password" required>
-                <input type="password" placeholder="Konfirmasi Password" required>
-                <input type="text" placeholder="Nama Lengkap" required>
-                <select required>
-                    <option value="">Jenis Kelamin</option>
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Perempuan">Perempuan</option>
-                </select>
-                <input type="number" placeholder="Umur" required>
-                <input type="text" placeholder="Nomor HP WhatsApp" required>
-                <button type="submit">Daftar</button>
-            </form>
-            <a href="#login">Sudah punya akun? Login di sini</a>
-        </div>
+  <!-- Register View -->
+  <section id="register-view" class="view active" role="tabpanel" tabindex="0" aria-labelledby="nav-register">
+    <h2>Register</h2>
+    <form id="register-form" aria-label="Registration form">
+      <input type="text" id="reg-username" placeholder="Username (email)" required autocomplete="username" />
+      <input type="password" id="reg-password" placeholder="Password" required autocomplete="new-password" />
+      <input type="password" id="reg-confirm-password" placeholder="Konfirmasi Password" required autocomplete="new-password" />
+      <input type="text" id="reg-fullname" placeholder="Nama Lengkap" required autocomplete="name" />
+      <select id="reg-gender" required aria-label="Jenis Kelamin">
+        <option value="">Pilih Jenis Kelamin</option>
+        <option value="Laki-laki">Laki-laki</option>
+        <option value="Perempuan">Perempuan</option>
+      </select>
+      <input type="number" id="reg-age" placeholder="Umur" min="1" max="120" required />
+      <input type="text" id="reg-phone" placeholder="Nomor HP WhatsApp" pattern="^\+?\d{10,15}$" title="Masukkan nomor HP yang valid, bisa dengan +62" required autocomplete="tel" />
+      <button type="submit" class="submit-btn">Daftar</button>
+      <div id="register-error" class="error-message" role="alert"></div>
+      <div id="register-success" class="success-message" role="alert"></div>
+    </form>
+  </section>
 
-        <div id="login" style="display: none;">
-            <h1>Login</h1>
-            <form id="loginForm">
-                <input type="text" placeholder="Username" required>
-                <input type="password" placeholder="Password" required>
-                <button type="submit">Login</button>
-            </form>
-            <a href="#register">Belum punya akun? Daftar di sini</a>
-        </div>
+  <!-- Login View -->
+  <section id="login-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="nav-login">
+    <h2>Login</h2>
+    <form id="login-form" aria-label="Login form">
+      <input type="text" id="login-username" placeholder="Username (email)" required autocomplete="username" />
+      <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password" />
+      <button type="submit" class="submit-btn">Login</button>
+      <div id="login-error" class="error-message" role="alert"></div>
+    </form>
+  </section>
 
-        <div id="dashboard" style="display: none;">
-            <h1>DASHBOARD WEB CONTROL</h1>
-            <p class="description">Website ini di buat untuk mempermudah mengetahui kapan kita harus bangun untuk bergerak</p>
-            <div class="menu">
-                <div class="icon" id="profile">Profile</div>
-                <div class="icon" id="heartRate">Heart Rate</div>
-                <div class="icon" id="graph">Graph</div>
-                <div class="icon" id="progress">Progress</div>
-            </div>
-        </div>
+  <!-- Dashboard Main View -->
+  <section id="dashboard-main-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="nav-dashboard">
+    <h1>DASHBOARD WEB CONTROL</h1>
+    <p class="small-text">Website ini dibuat untuk mempermudah mengetahui kapan kita harus bangun untuk bergerak</p>
+    <span class="material-icons heart-icon" aria-hidden="true">favorite</span>
+
+    <div class="dashboard-menu" role="list">
+      <div class="menu-item" role="listitem" tabindex="0" data-target="profile-view" aria-label="Menu Profile">
+        <span class="material-icons menu-icon">person</span>
+        <div class="menu-label">Profile</div>
+      </div>
+      <div class="menu-item" role="listitem" tabindex="0" data-target="heart-rate-view" aria-label="Menu Heart Rate">
+        <span class="material-icons menu-icon">favorite</span>
+        <div class="menu-label">Heart Rate</div>
+      </div>
+      <div class="menu-item" role="listitem" tabindex="0" data-target="graph-view" aria-label="Menu Graph">
+        <span class="material-icons menu-icon">show_chart</span>
+        <div class="menu-label">Graph</div>
+      </div>
+      <div class="menu-item" role="listitem" tabindex="0" data-target="progress-view" aria-label="Menu Progress">
+        <span class="material-icons menu-icon">bar_chart</span>
+        <div class="menu-label">Progress</div>
+      </div>
     </div>
+  </section>
 
-    <script>
-        // Inisialisasi Firebase
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "firebase/app";
-        import { getAnalytics } from "firebase/analytics";
+  <!-- Profile View -->
+  <section id="profile-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="profile-menu" aria-hidden="true">
+    <div class="dashboard-content">
+      <h2>Profile</h2>
+      <ul class="profile-data" id="profile-data-list">
+        <li>Loading profile...</li>
+      </ul>
+      <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
+    </div>
+  </section>
 
-        // Konfigurasi Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
-            authDomain: "heartalv-bbb9f.firebaseapp.com",
-            databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "heartalv-bbb9f",
-            storageBucket: "heartalv-bbb9f.firebasestorage.app",
-            messagingSenderId: "419949588771",
-            appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
-            measurementId: "G-8RDRRPGWMW"
-        };
+  <!-- Heart Rate View -->
+  <section id="heart-rate-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="heart-rate-menu" aria-hidden="true">
+    <div class="dashboard-content">
+      <h2>Heart Rate</h2>
+      <canvas id="heartRateGraph" aria-label="Grafik heart rate naik turun" role="img" width="700" height="200"></canvas>
+      <p style="text-align:center; font-size: 1.4rem; margin-top: 12px;">
+        <span>Current Heart Rate: </span>
+        <strong id="currentHeartRate">--</strong> bpm
+      </p>
+      <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
+    </div>
+  </section>
 
-        // Inisialisasi Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
+  <!-- Graph View -->
+  <section id="graph-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="graph-menu" aria-hidden="true">
+    <div class="dashboard-content">
+      <h2>Graph</h2>
+      <div class="date-nav" aria-label="Navigasi tanggal grafik">
+        <button id="prev-day" aria-label="Hari sebelumnya">&lt; Sebelumnya</button>
+        <span id="current-date" style="color: #e0e7ff; font-weight: 600;">Hari Ini</span>
+        <button id="next-day" aria-label="Hari berikutnya">Selanjutnya &gt;</button>
+      </div>
+      <canvas id="dailyGraph" aria-label="Grafik rekaman harian heart rate" role="img" width="700" height="200"></canvas>
+      <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
+    </div>
+  </section>
 
-        // Fungsi untuk menampilkan halaman
-        function showPage(page) {
-            document.getElementById('home').style.display = 'none';
-            document.getElementById('register').style.display = 'none';
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'none
-document.getElementById(page).style.display = 'block';
-        }
-        // Event listener untuk navigasi
-        document.querySelectorAll('nav a').forEach(link => {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const target = this.getAttribute('href').substring(1);
-                showPage(target);
-            });
-        });
-        // Fungsi untuk menangani pendaftaran
-        document.getElementById('registerForm')?.addEventListener('submit', function(event) {
-            event.preventDefault();
-            // Ambil data dari form dan simpan ke Firebase
-            const username = this[0].value;
-            const password = this[1].value;
-            const confirmPassword = this[2].value;
-            const fullName = this[3].value;
-            const gender = this[4].value;
-            const age = this[5].value;
-            const whatsappNumber = this[6].value;
-            if (password !== confirmPassword) {
-                alert("Password dan konfirmasi password tidak cocok!");
-                            document.getElementById(page).style.display = 'block';
-        }
+  <!-- Progress View -->
+  <section id="progress-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="progress-menu" aria-hidden="true">
+    <div class="dashboard-content">
+      <h2>Progress</h2>
+      <canvas id="monthlyProgress" aria-label="Diagram batang rekaman data bulanan" role="img" width="700" height="200"></canvas>
+      <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
+    </div>
+  </section>
 
-        // Event listener untuk navigasi
-        document.querySelectorAll('nav a').forEach(link => {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const target = this.getAttribute('href').substring(1);
-                showPage(target);
-            });
-        });
+</div>
 
-        // Fungsi untuk menangani pendaftaran
-        document.getElementById('registerForm')?.addEventListener('submit', function(event) {
-            event.preventDefault();
-            // Ambil data dari form dan simpan ke Firebase
-            const username = this[0].value;
-            const password = this[1].value;
-            const confirmPassword = this[2].value;
-            const fullName = this[3].value;
-            const gender = this[4].value;
-            const age = this[5].value;
-            const whatsappNumber = this[6].value;
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-            if (password !== confirmPassword) {
-                alert("Password dan konfirmasi password tidak cocok!");
-                return;
-            }
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-            // Simpan data ke Firebase (implementasi sesuai kebutuhan)
-            console.log("Data pendaftaran:", { username, password, fullName, gender, age, whatsappNumber });
-            alert("Pendaftaran berhasil! Silakan login.");
-            showPage('login');
-        });
+<script>
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+    authDomain: "heartalv-bbb9f.firebaseapp.com",
+    projectId: "heartalv-bbb9f",
+    storageBucket: "heartalv-bbb9f.appspot.com",
+    messagingSenderId: "419949588771",
+    appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
+  };
 
-        // Fungsi untuk menangani login
-        document.getElementById('loginForm')?.addEventListener('submit', function(event) {
-            event.preventDefault();
-            // Ambil data dari form dan verifikasi dengan Firebase
-            const username = this[0].value;
-            const password = this[1].value;
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const rtdb = firebase.database();
 
-            // Verifikasi login (implementasi sesuai kebutuhan)
-            console.log("Data login:", { username, password });
-            alert("Login berhasil! Selamat datang di Dashboard.");
-            showPage('dashboard');
-        });
+  // DOM Elements
+  const views = {
+    register: document.getElementById('register-view'),
+    login: document.getElementById('login-view'),
+    dashboardMain: document.getElementById('dashboard-main-view'),
+    profile: document.getElementById('profile-view'),
+    heartRate: document.getElementById('heart-rate-view'),
+    graph: document.getElementById('graph-view'),
+    progress: document.getElementById('progress-view')
+  };
 
-        // Fungsi untuk menampilkan data di dashboard
-        document.getElementById('profile')?.addEventListener('click', function() {
-            alert("Menampilkan data profile...");
-            // Implementasi untuk menampilkan data profile
-        });
+  const navButtons = {
+    register: document.getElementById('nav-register'),
+    login: document.getElementById('nav-login'),
+    dashboard: document.getElementById('nav-dashboard'),
+  };
 
-        document.getElementById('heartRate')?.addEventListener('click', function() {
-            alert("Menampilkan data heart rate...");
-            // Implementasi untuk menampilkan data heart rate
-        });
+  // Current Date Management
+  let currentDate = new Date();
+  const currentDateEl = document.getElementById('current-date');
+  
+  // Format date as "DD/MM/YYYY"
+  function formatDate(date) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
-        document.getElementById('graph')?.addEventListener('click', function() {
-            alert("Menampilkan grafik...");
-            // Implementasi untuk menampilkan grafik
-        });
+  // Update date display
+  function updateDateDisplay() {
+    currentDateEl.textContent = formatDate(currentDate);
+  }
 
-        document.getElementById('progress')?.addEventListener('click', function() {
-            alert("Menampilkan diagram batang...");
-            // Implementasi untuk menampilkan diagram batang
-        });
+  // View Management
+  function switchView(viewKey) {
+    Object.values(views).forEach(v => {
+      v.classList.remove('active');
+      v.setAttribute('aria-hidden', 'true');
+    });
+    
+    if(views[viewKey]) {
+      views[viewKey].classList.add('active');
+      views[viewKey].setAttribute('aria-hidden', 'false');
+    }
 
-        // Tampilkan halaman utama saat pertama kali dibuka
-        showPage('home');
-    </script>
+    // Update nav buttons
+    if(currentUser) {
+      navButtons.register.style.display = 'none';
+      navButtons.login.style.display = 'none';
+      navButtons.dashboard.style.display = 'inline-block';
+      navButtons.dashboard.disabled = false;
+    } else {
+      navButtons.register.style.display = 'inline-block';
+      navButtons.login.style.display = 'inline-block';
+      navButtons.dashboard.style.display = 'inline-block';
+      navButtons.dashboard.disabled = true;
+    }
+  }
+
+  // Dashboard Menu Navigation
+  function openDashboardMenu(menuKey) {
+    views.dashboardMain.classList.remove('active');
+    views.dashboardMain.setAttribute('aria-hidden', 'true');
+    
+    if(views[menuKey]) {
+      views[menuKey].classList.add('active');
+      views[menuKey].setAttribute('aria-hidden', 'false');
+      
+      // Load content for the selected menu
+      if(menuKey === 'profile') loadUserProfile();
+      else if(menuKey === 'heartRate') loadHeartRateData();
+      else if(menuKey === 'graph') loadDailyGraphData();
+      else if(menuKey === 'progress') loadMonthlyProgress();
+    }
+  }
+
+  // Event Listeners
+  navButtons.register.addEventListener('click', () => switchView('register'));
+  navButtons.login.addEventListener('click', () => switchView('login'));
+  navButtons.dashboard.addEventListener('click', () => switchView('dashboardMain'));
+
+  // Dashboard menu items
+  document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.getAttribute('data-target').replace('-view','');
+      openDashboardMenu(target);
+    });
+  });
+
+  // Back buttons
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchView('dashboardMain');
+    });
+  });
+
+  // Date navigation
+  document.getElementById('prev-day').addEventListener('click', () => {
+    currentDate.setDate(currentDate.getDate() - 1);
+    updateDateDisplay();
+    loadDailyGraphData();
+  });
+
+  document.getElementById('next-day').addEventListener('click', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if(currentDate < tomorrow) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      updateDateDisplay();
+      loadDailyGraphData();
+    }
+  });
+
+  // Forms
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearMessages();
+    
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const confirm = document.getElementById('reg-confirm-password').value;
+    const fullName = document.getElementById('reg-fullname').value.trim();
+    const gender = document.getElementById('reg-gender').value;
+    const age = parseInt(document.getElementById('reg-age').value, 10);
+    const phone = document.getElementById('reg-phone').value.trim();
+
+    if(password !== confirm) {
+      showError('register-error', 'Password dan konfirmasi password tidak cocok.');
+      return;
+    }
+
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(username, password);
+      await db.collection('users').doc(cred.user.uid).set({ 
+        fullName, 
+        gender, 
+        age, 
+        phone 
+      });
+      showSuccess('register-success', 'Pendaftaran berhasil! Silakan login.');
+      e.target.reset();
+    } catch(err) {
+      showError('register-error', err.message);
+    }
+  });
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearMessages();
+    
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    
+    try {
+      await auth.signInWithEmailAndPassword(username, password);
+      switchView('dashboardMain');
+    } catch(err) {
+      showError('login-error', err.message);
+    }
+  });
+
+  // Helper Functions
+  function clearMessages() {
+    showError('register-error', '');
+    showSuccess('register-success', '');
+    showError('login-error', '');
+  }
+
+  function showError(id, msg) {
+    document.getElementById(id).textContent = msg;
+  }
+
+  function showSuccess(id, msg) {
+    document.getElementById(id).textContent = msg;
+  }
+
+  // Data Loading Functions
+  let currentUser = null;
+  let heartChart = null;
+  let dailyChart = null;
+  let monthlyChart = null;
+
+  async function loadUserProfile() {
+    const list = document.getElementById('profile-data-list');
+    list.innerHTML = '<li>Memuat data profil...</li>';
+    
+    if(!currentUser) return;
+    
+    try {
+      const doc = await db.collection('users').doc(currentUser.uid).get();
+      if(!doc.exists) {
+        list.innerHTML = '<li>Data profil tidak ditemukan.</li>';
+        return;
+      }
+      
+      const data = doc.data();
+      list.innerHTML = `
+        <li><strong>Nama Lengkap:</strong> ${data.fullName}</li>
+        <li><strong>Jenis Kelamin:</strong> ${data.gender}</li>
+        <li><strong>Umur:</strong> ${data.age}</li>
+        <li><strong>Nomor HP:</strong> ${data.phone}</li>
+      `;
+    } catch {
+      list.innerHTML = '<li>Gagal memuat data profil.</li>';
+    }
+  }
+
+  function loadHeartRateData() {
+    const currentHeartRateEl = document.getElementById('currentHeartRate');
+    const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
+    
+    // Simulate real-time data (replace with actual Firebase RTDB implementation)
+    const labels = Array.from({length: 30}, (_, i) => `${i}s`);
+    const data = Array.from({length: 30}, () => Math.floor(60 + Math.random() * 40));
+    
+    // Update current heart rate display
+    currentHeartRateEl.textContent = data[data.length - 1];
+    
+    // Create or update chart
+    if(heartChart) heartChart.destroy();
+    
+    heartChart = new Chart(heartCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Heart Rate (bpm)',
+          data: data,
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34, 211, 238, 0.3)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          borderWidth: 3,
+          segment: {
+            borderColor: ctx => ctx.p0.parsed.y > 100 ? '#f87171' : '#22d3ee'
+          }
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: false, suggestedMin: 50, suggestedMax: 150 },
+          x: { display: true }
+        },
+        plugins: { legend: { display: false } },
+        animation: false,
+        maintainAspectRatio: false
+      }
+    });
+  }
+
+  function loadDailyGraphData() {
+    const dailyCtx = document.getElementById('dailyGraph').getContext('2d');
+    
+    // Generate sample data (replace with actual Firebase data)
+    const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+    const data = Array.from({length: 24}, () => Math.floor(60 + Math.random() * 40));
+    
+    if(dailyChart) dailyChart.destroy();
+    
+    dailyChart = new Chart(dailyCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Heart Rate (bpm)",
+          data: data,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.3)',
+          fill: true,
+          tension: 0.2,
+          pointRadius: 3,
+          borderWidth: 3
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: false, suggestedMin: 40, suggestedMax: 140 },
+          x: {}
+        },
+        plugins: { legend: { display: false }},
+        maintainAspectRatio: false,
+        animation: false
+      }
+    });
+  }
+
+  function loadMonthlyProgress() {
+    const monthlyCtx = document.getElementById('monthlyProgress').getContext('2d');
+    
+    // Generate sample data (replace with actual Firebase data)
+    const labels = Array.from({length: 30}, (_, i) => (i+1).toString());
+    const data = Array.from({length: 30}, () => 70 + Math.round(Math.sin(Math.PI * Math.random()) * 10));
+    
+    if(monthlyChart) monthlyChart.destroy();
+    
+    monthlyChart = new Chart(monthlyCtx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Avg Heart Rate / Day',
+          data: data,
+          backgroundColor: '#06b6d4'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, suggestedMax: 140 },
+          x: {}
+        },
+        plugins: { legend: { display: false }},
+        maintainAspectRatio: false,
+        animation: false
+      }
+    });
+  }
+
+  // Auth State Listener
+  auth.onAuthStateChanged(user => {
+    currentUser = user;
+    if(user) {
+      switchView('dashboardMain');
+      loadUserProfile();
+      loadHeartRateData();
+      updateDateDisplay();
+      loadDailyGraphData();
+      loadMonthlyProgress();
+    } else {
+      switchView('login');
+    }
+  });
+
+  // Initialize
+  window.addEventListener('load', () => {
+    updateDateDisplay();
+  });
+</script>
 </body>
 </html>
-
