@@ -385,19 +385,6 @@
       <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
     </div>
   </section>
-  
-  <section id="heart-rate-view" class="view" role="tabpanel" tabindex="0" aria-labelledby="heart-rate-menu" aria-hidden="true">
-  <div class="dashboard-content">
-    <h2>Heart Rate Monitor</h2>
-    <div class="heart-rate-display">
-      <span>Detak Jantung: </span>
-      <span id="currentHeartRate" class="bpm-value">--</span>
-      <span> BPM</span>
-    </div>
-    <canvas id="heartRateGraph" width="700" height="300"></canvas>
-    <button class="back-btn" data-target="dashboard-main-view">Kembali ke Dashboard</button>
-  </div>
-</section>
 
 </div>
 
@@ -412,16 +399,15 @@
 
 <script>
   // Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
-  authDomain: "heartalv-bbb9f.firebaseapp.com",
-  databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app", // WAJIB ADA
-  projectId: "heartalv-bbb9f",
-  storageBucket: "heartalv-bbb9f.appspot.com",
-  messagingSenderId: "419949588771",
-  appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
-};
-
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+    authDomain: "heartalv-bbb9f.firebaseapp.com",
+    databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "heartalv-bbb9f",
+    storageBucket: "heartalv-bbb9f.appspot.com",
+    messagingSenderId: "419949588771",
+    appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
+  };
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
@@ -567,7 +553,8 @@ const firebaseConfig = {
         fullName, 
         gender, 
         age, 
-        phone 
+        phone,
+        email: username
       });
       showSuccess('register-success', 'Pendaftaran berhasil! Silakan login.');
       e.target.reset();
@@ -611,7 +598,8 @@ const firebaseConfig = {
   let heartChart = null;
   let dailyChart = null;
   let monthlyChart = null;
-let heartRateRef = null;  // <-- INI DITARUH DI SINI
+  let heartRateRef = null;
+
   async function loadUserProfile() {
     const list = document.getElementById('profile-data-list');
     list.innerHTML = '<li>Memuat data profil...</li>';
@@ -627,18 +615,19 @@ let heartRateRef = null;  // <-- INI DITARUH DI SINI
       
       const data = doc.data();
       list.innerHTML = `
-        <li><strong>Nama Lengkap:</strong> ${data.fullName}</li>
-        <li><strong>Jenis Kelamin:</strong> ${data.gender}</li>
-        <li><strong>Umur:</strong> ${data.age}</li>
-        <li><strong>Nomor HP:</strong> ${data.phone}</li>
+        <li><strong>Email:</strong> ${data.email || '-'}</li>
+        <li><strong>Nama Lengkap:</strong> ${data.fullName || '-'}</li>
+        <li><strong>Jenis Kelamin:</strong> ${data.gender || '-'}</li>
+        <li><strong>Umur:</strong> ${data.age || '-'}</li>
+        <li><strong>Nomor HP:</strong> ${data.phone || '-'}</li>
       `;
-    } catch {
+    } catch(err) {
+      console.error("Error loading profile:", err);
       list.innerHTML = '<li>Gagal memuat data profil.</li>';
     }
   }
 
-
- function loadHeartRateData() {
+  function loadHeartRateData() {
     const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
     const currentHeartRateEl = document.getElementById('currentHeartRate');
     
@@ -691,15 +680,20 @@ let heartRateRef = null;  // <-- INI DITARUH DI SINI
       }
     });
 
-    // Panggil fungsi untuk setup realtime data
+    // Setup realtime data listener
     setupRealTimeHeartRate();
 
     // Fungsi untuk koneksi ke Firebase RTDB
     function setupRealTimeHeartRate() {
       if(!currentUser) return;
       
-      const deviceId = "4a9941"; // Ganti dengan device ID user
-      const heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
+      // Hapus listener sebelumnya jika ada
+      if(heartRateRef) {
+        heartRateRef.off();
+      }
+      
+      const deviceId = "demo-device"; // Ganti dengan device ID user
+      heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
       
       heartRateRef.on('value', (snapshot) => {
         const bpm = snapshot.val();
@@ -735,7 +729,8 @@ let heartRateRef = null;  // <-- INI DITARUH DI SINI
       heartChart.data.datasets[0].data = ekgData;
       heartChart.update('none');
     }
-}
+  }
+
   function loadDailyGraphData() {
     const dailyCtx = document.getElementById('dailyGraph').getContext('2d');
     
@@ -762,10 +757,25 @@ let heartRateRef = null;  // <-- INI DITARUH DI SINI
       },
       options: {
         scales: {
-          y: { beginAtZero: false, suggestedMin: 40, suggestedMax: 140 },
-          x: {}
+          y: { 
+            beginAtZero: false, 
+            min: 40, 
+            max: 140,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          }
         },
-        plugins: { legend: { display: false }},
+        plugins: { 
+          legend: { 
+            display: false 
+          }
+        },
         maintainAspectRatio: false,
         animation: false
       }
@@ -793,10 +803,25 @@ let heartRateRef = null;  // <-- INI DITARUH DI SINI
       },
       options: {
         scales: {
-          y: { beginAtZero: true, suggestedMax: 140 },
-          x: {}
+          y: { 
+            beginAtZero: false, 
+            min: 50,
+            max: 120,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          }
         },
-        plugins: { legend: { display: false }},
+        plugins: { 
+          legend: { 
+            display: false 
+          }
+        },
         maintainAspectRatio: false,
         animation: false
       }
