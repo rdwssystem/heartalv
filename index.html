@@ -814,28 +814,29 @@ function loadDailyGraphData() {
 
 // Fungsi untuk ambil data heart rate dari Realtime Database
 function loadHeartRateRealtime() {
-  const deviceId = "4a9941"; // bisa diganti dinamis nanti
+  const deviceId = "4a9941"; // Ganti sesuai device
   const heartRatePath = "heartRateData/" + deviceId;
 
-  // Urutkan berdasarkan key dan ambil satu yang terakhir
- rtdb.ref(heartRatePath)
-  .orderByKey()
-  .limitToLast(20)
-  .on("value", (snapshot) => {
-    const data = snapshot.val();
-    if (!data) {
-      console.log("Tidak ada data detak jantung.");
-      return;
-    }
+  rtdb.ref(heartRatePath)
+    .orderByKey()
+    .limitToLast(20) // Ambil 20 data terakhir
+    .on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        console.log("Data kosong");
+        return;
+      }
 
-    const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-    const labels = entries.map(([key]) => `${key}:00`);
-    const values = entries.map(([_, value]) => value);
+      // Urutkan berdasarkan timestamp jam
+      const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
 
-    currentHeartRateEl.textContent = values[values.length - 1];
-    updateHeartChart(labels, values);
-  });
+      const labels = entries.map(([time]) => `${time}:00`);
+      const bpms = entries.map(([_, bpm]) => bpm);
 
+      // Tampilkan yang terakhir
+      currentHeartRateEl.textContent = bpms[bpms.length - 1];
+      updateHeartChart(labels, bpms);
+    });
 }
 
 
