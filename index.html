@@ -256,6 +256,14 @@
     display: block;
   }
 
+  /* Tambahan untuk heart rate display */
+  #currentHeartRate {
+    display: inline-block;
+    min-width: 40px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+  }
+
   @media (max-width: 640px) {
     .container {
       margin: 16px;
@@ -599,6 +607,7 @@
   let dailyChart = null;
   let monthlyChart = null;
   let heartRateRef = null;
+  let currentHeartRateEl = null; // Variabel global untuk menyimpan referensi elemen BPM
 
   async function loadUserProfile() {
     const list = document.getElementById('profile-data-list');
@@ -627,12 +636,13 @@
     }
   }
 
-function loadHeartRateData() {
+  function loadHeartRateData() {
     const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
-    const currentHeartRateEl = document.getElementById('currentHeartRate');
+    currentHeartRateEl = document.getElementById('currentHeartRate'); // Simpan referensi
     
-    // Inisialisasi data EKG dengan baseline 80 BPM
-    let ekgData = Array(100).fill(80);
+    // Inisialisasi nilai default
+    currentHeartRateEl.textContent = '--';
+    currentHeartRateEl.style.color = '#22d3ee';
     
     // Hancurkan chart lama jika ada
     if(heartChart) heartChart.destroy();
@@ -644,7 +654,7 @@ function loadHeartRateData() {
             labels: Array(100).fill(''),
             datasets: [{
                 label: 'EKG',
-                data: ekgData,
+                data: Array(100).fill(80),
                 borderColor: '#22d3ee',
                 backgroundColor: 'transparent',
                 borderWidth: 2,
@@ -670,116 +680,77 @@ function loadHeartRateData() {
     });
 
     // Setup realtime data listener
-    setupRealTimeHeartRate(heartChart, currentHeartRateEl, ekgData);
-}
+    setupRealTimeHeartRate();
+  }
 
-// Fungsi baru untuk menangani data realtime
-function setupRealTimeHeartRate(chart, bpmElement, ekgDataArray) {
-    if (!currentUser) return;
-    
-    // Hapus listener sebelumnya jika ada
-    if (heartRateRef) {
-        heartRateRef.off();
+  function setupRealTimeHeartRate() {
+    if (!currentUser) {
+      console.error("User not logged in");
+      return;
     }
 
-    const deviceId = "demo-device"; // Ganti dengan device ID user
+    // Hapus listener sebelumnya jika ada
+    if (heartRateRef) {
+      heartRateRef.off();
+    }
+
+    const deviceId = "demo-device";
     heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
 
     // Listener untuk data realtime
     heartRateRef.on('value', (snapshot) => {
-        const bpm = snapshot.val();
-        console.log("Data BPM diterima:", bpm);
-        
-        if (bpm !== null) {
-            // Update tampilan BPM
-            bpmElement.textContent = bpm;
-            
-            // Update warna berdasarkan nilai BPM
-            if (bpm > 100) {
-                chart.data.datasets[0].borderColor = '#f87171';
-                bpmElement.style.color = '#f87171';
-            } else {
-                chart.data.datasets[0].borderColor = '#22d3ee';
-                bpmElement.style.color = '#22d3ee';
-            }
-            
-            // Update grafik EKG dengan pola yang lebih realistis
-            updateEKGChart(chart, ekgDataArray, bpm);
+      const bpm = snapshot.val();
+      console.log("Data BPM diterima:", bpm);
+      
+      if (bpm !== null && bpm !== undefined) {
+        // Pastikan elemen ada sebelum update
+        if (currentHeartRateEl) {
+          currentHeartRateEl.textContent = bpm;
+          
+          // Update warna berdasarkan nilai BPM
+          if (bpm > 100) {
+            currentHeartRateEl.style.color = '#f87171';
+          } else {
+            currentHeartRateEl.style.color = '#22d3ee';
+          }
+        } else {
+          console.error("Element currentHeartRate tidak ditemukan!");
         }
+        
+        // Update grafik
+        if (heartChart) {
+          updateEKGChart(bpm);
+        }
+      } else {
+        console.warn("Data BPM null/undefined");
+      }
     });
 
-    // Simulasi data (untuk demo saja)
-    simulateHeartRateData(deviceId);
-}
-
-// Fungsi untuk mensimulasikan data heart rate (hanya untuk demo)
-function simulateHeartRateData(deviceId) {
+    // Untuk testing, kirim data acak
     setInterval(() => {
-        const bpm = 70 + Math.floor(Math.random() * 30); // BPM acak 70-100
-        rtdb.ref(`heartRateData/${deviceId}`).set(bpm);
-        console.log("Data BPM dikirim:", bpm);
+      const bpm = 70 + Math.floor(Math.random() * 30);
+      heartRateRef.set(bpm);
+      console.log("Data BPM dikirim:", bpm);
     }, 1000);
-}
+  }
 
-// Fungsi update grafik EKG dengan pola yang lebih realistis
-function updateEKGChart(chart, dataArray, bpm) {
-    // Hapus data paling awal
-    dataArray.shift();
+  // Fungsi update grafik EKG
+  function updateEKGChart(bpm) {
+    // Dapatkan data array dari chart
+    const chartData = heartChart.data.datasets[0].data;
     
-    // Generate pola EKG yang lebih realistis
-    const cycleLength = Math.floor(60000 / bpm); // ms per beat
-    const samplesPerBeat = 10; // Jumlah sample per detak jantung
+    // Hapus data pertama
+    chartData.shift();
     
-    // Buat satu siklus EKG
-    const ekgBeat = generateEKGBeat(bpm, samplesPerBeat);
-    
-    // Tambahkan ke data array
-    dataArray.push(...ekgBeat);
-    
-    // Pastikan panjang data tetap 100
-    while (dataArray.length > 100) {
-        dataArray.shift();
-    }
+    // Tambahkan data baru
+    chartData.push(bpm);
     
     // Update chart
-    chart.data.datasets[0].data = dataArray;
-    chart.update('none');
-}
-
-// Fungsi untuk menghasilkan satu siklus gelombang EKG
-function generateEKGBeat(bpm, samples) {
-    const beat = [];
-    const baseline = bpm;
+    heartChart.update('none');
     
-    for (let i = 0; i < samples; i++) {
-        let value;
-        const phase = i / samples;
-        
-        if (phase < 0.2) {
-            // P wave - kecil naik
-            value = baseline + Math.sin(phase * Math.PI * 5) * 5;
-        } else if (phase < 0.3) {
-            // PR segment - datar
-            value = baseline;
-        } else if (phase < 0.4) {
-            // QRS complex - spike besar
-            value = baseline - 30 + Math.sin((phase-0.3) * Math.PI * 10) * 40;
-        } else if (phase < 0.6) {
-            // ST segment - recovery
-            value = baseline + (phase-0.4) * 10;
-        } else if (phase < 0.8) {
-            // T wave - rounded
-            value = baseline + Math.sin((phase-0.6) * Math.PI) * 15;
-        } else {
-            // Baseline sampai siklus berikutnya
-            value = baseline;
-        }
-        
-        beat.push(value);
-    }
-    
-    return beat;
-}
+    // Update warna garis berdasarkan BPM
+    heartChart.data.datasets[0].borderColor = bpm > 100 ? '#f87171' : '#22d3ee';
+  }
 
   function loadDailyGraphData() {
     const dailyCtx = document.getElementById('dailyGraph').getContext('2d');
