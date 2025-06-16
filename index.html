@@ -673,8 +673,6 @@
   }
 function loadHeartRateData() {
   loadHeartRateRealtime(); // ambil data realtime
-    if(window.heartRateInterval) clearInterval(window.heartRateInterval);
-    window.heartRateInterval = setInterval(simulateHeartRateStream, 3000);
   }
 
   // Daily and monthly charts
@@ -718,10 +716,30 @@ function loadHeartRateData() {
       }
     });
   }
-  function loadDailyGraphData() {
-    const data = generateDailyData();
-    drawDailyGraph(data);
-  }
+function loadDailyGraphData() {
+  const deviceId = "4a9941";
+  const path = "heartRateData/" + deviceId;
+
+  rtdb.ref(path).once("value", (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    // Siapkan array 24 jam
+    const hourly = Array(24).fill(null);
+    Object.entries(data).forEach(([jam, bpm]) => {
+      const hour = parseInt(jam);
+      if (!isNaN(hour) && hour >= 0 && hour < 24) {
+        hourly[hour] = bpm;
+      }
+    });
+
+    // Ganti nilai null dengan 0 atau "-" jika mau
+    const finalData = hourly.map(v => v !== null ? v : 0);
+    drawDailyGraph(finalData);
+  });
+}
+
+
 
   function generateMonthlyData() {
     const data = [];
@@ -752,10 +770,17 @@ function loadHeartRateData() {
       }
     });
   }
-  function loadMonthlyProgress() {
-    const data = generateMonthlyData();
-    drawMonthlyProgress(data);
+ function loadMonthlyProgress() {
+  const data = [];
+
+  // Simulasi 30 hari dengan data acak fix
+  for (let i = 1; i <= 30; i++) {
+    const simulatedBPM = 70 + Math.round(Math.sin(i / 3) * 10); // pola naik turun
+    data.push(simulatedBPM);
   }
+
+  drawMonthlyProgress(data);
+}
 
   document.getElementById('prev-day').addEventListener('click', () => {
     currentDate.setDate(currentDate.getDate()-1);
@@ -793,26 +818,24 @@ function loadHeartRateRealtime() {
   const heartRatePath = "heartRateData/" + deviceId;
 
   // Urutkan berdasarkan key dan ambil satu yang terakhir
-  rtdb.ref(heartRatePath)
-    .orderByKey()
-    .limitToLast(1)
-    .on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        console.log("Tidak ada data detak jantung.");
-        return;
-      }
+ rtdb.ref(heartRatePath)
+  .orderByKey()
+  .limitToLast(20)
+  .on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      console.log("Tidak ada data detak jantung.");
+      return;
+    }
 
-      // Ambil entri terbaru
-      const [latestTime, latestBPM] = Object.entries(data)[0];
-      console.log(`Terbaru: ${latestTime}: ${latestBPM}`);
+    const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+    const labels = entries.map(([key]) => `${key}:00`);
+    const values = entries.map(([_, value]) => value);
 
-      // Tampilkan ke UI
-      currentHeartRateEl.textContent = latestBPM;
+    currentHeartRateEl.textContent = values[values.length - 1];
+    updateHeartChart(labels, values);
+  });
 
-      // Update grafik (misal histori 5 titik terakhir)
-      updateHeartChart([`${latestTime}:00`], [latestBPM]);
-    });
 }
 
 
