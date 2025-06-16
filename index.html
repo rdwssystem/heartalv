@@ -4,12 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Health Monitoring Dashboard</title>
-<!-- Material Icons CDN -->
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
-  /* Reset & base */
   * {
     box-sizing: border-box;
   }
@@ -256,7 +254,6 @@
     display: block;
   }
 
-  /* Tambahan untuk heart rate display */
   #currentHeartRate {
     display: inline-block;
     min-width: 40px;
@@ -564,8 +561,9 @@
         phone,
         email: username
       });
-      showSuccess('register-success', 'Pendaftaran berhasil! Silakan login.');
-      e.target.reset();
+      showSuccess('register-success', 'Pendaftaran berhasil! Anda akan otomatis login.');
+      // Auto-login after register
+      await auth.signInWithEmailAndPassword(username, password);
     } catch(err) {
       showError('register-error', err.message);
     }
@@ -580,7 +578,6 @@
     
     try {
       await auth.signInWithEmailAndPassword(username, password);
-      switchView('dashboardMain');
     } catch(err) {
       showError('login-error', err.message);
     }
@@ -607,7 +604,7 @@
   let dailyChart = null;
   let monthlyChart = null;
   let heartRateRef = null;
-  let currentHeartRateEl = null; // Variabel global untuk menyimpan referensi elemen BPM
+  let currentHeartRateEl = document.getElementById('currentHeartRate');
 
   async function loadUserProfile() {
     const list = document.getElementById('profile-data-list');
@@ -638,16 +635,18 @@
 
   function loadHeartRateData() {
     const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
-    currentHeartRateEl = document.getElementById('currentHeartRate'); // Simpan referensi
+    currentHeartRateEl = document.getElementById('currentHeartRate');
     
-    // Inisialisasi nilai default
-    currentHeartRateEl.textContent = '--';
-    currentHeartRateEl.style.color = '#22d3ee';
+    // Initialize default value
+    if(currentHeartRateEl) {
+      currentHeartRateEl.textContent = '--';
+      currentHeartRateEl.style.color = '#22d3ee';
+    }
     
-    // Hancurkan chart lama jika ada
+    // Destroy old chart if exists
     if(heartChart) heartChart.destroy();
     
-    // Buat grafik EKG baru
+    // Create new EKG chart
     heartChart = new Chart(heartCtx, {
         type: 'line',
         data: {
@@ -689,66 +688,57 @@
       return;
     }
 
-    // Hapus listener sebelumnya jika ada
+    // Remove previous listener if exists
     if (heartRateRef) {
       heartRateRef.off();
     }
 
     const deviceId = "demo-device";
+    console.log("Connecting to Firebase RTDB path: heartRateData/" + deviceId);
     heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
 
-    // Listener untuk data realtime
+    // Listener for realtime data
     heartRateRef.on('value', (snapshot) => {
       const bpm = snapshot.val();
-      console.log("Data BPM diterima:", bpm);
+      console.log("Received BPM data:", bpm);
       
       if (bpm !== null && bpm !== undefined) {
-        // Pastikan elemen ada sebelum update
-        if (currentHeartRateEl) {
-          currentHeartRateEl.textContent = bpm;
-          
-          // Update warna berdasarkan nilai BPM
-          if (bpm > 100) {
-            currentHeartRateEl.style.color = '#f87171';
-          } else {
-            currentHeartRateEl.style.color = '#22d3ee';
-          }
-        } else {
-          console.error("Element currentHeartRate tidak ditemukan!");
+        // Update UI
+        const displayEl = document.getElementById('currentHeartRate');
+        if (displayEl) {
+          displayEl.textContent = bpm;
+          displayEl.style.color = bpm > 100 ? '#f87171' : '#22d3ee';
         }
         
-        // Update grafik
+        // Update chart
         if (heartChart) {
           updateEKGChart(bpm);
         }
-      } else {
-        console.warn("Data BPM null/undefined");
       }
+    }, (error) => {
+      console.error("Firebase read failed:", error);
     });
-
-    // Untuk testing, kirim data acak
-    setInterval(() => {
-      const bpm = 70 + Math.floor(Math.random() * 30);
-      heartRateRef.set(bpm);
-      console.log("Data BPM dikirim:", bpm);
-    }, 1000);
   }
 
-  // Fungsi update grafik EKG
+  // EKG chart update function
   function updateEKGChart(bpm) {
-    // Dapatkan data array dari chart
+    if (!heartChart) {
+      console.warn("Chart not initialized!");
+      return;
+    }
+    
     const chartData = heartChart.data.datasets[0].data;
     
-    // Hapus data pertama
+    // Remove first data point
     chartData.shift();
     
-    // Tambahkan data baru
+    // Add new data point
     chartData.push(bpm);
     
     // Update chart
     heartChart.update('none');
     
-    // Update warna garis berdasarkan BPM
+    // Update line color based on BPM
     heartChart.data.datasets[0].borderColor = bpm > 100 ? '#f87171' : '#22d3ee';
   }
 
@@ -851,9 +841,13 @@
 
   // Auth State Listener
   auth.onAuthStateChanged(user => {
+    console.log("Auth state changed:", user ? "User logged in" : "User logged out");
     currentUser = user;
     if(user) {
+      console.log("Logged in user UID:", user.uid);
       switchView('dashboardMain');
+      
+      // Initialize all dashboard components
       loadUserProfile();
       loadHeartRateData();
       updateDateDisplay();
@@ -867,6 +861,7 @@
   // Initialize
   window.addEventListener('load', () => {
     updateDateDisplay();
+    console.log("Application initialized");
   });
 </script>
 </body>
