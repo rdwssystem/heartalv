@@ -624,6 +624,33 @@ const firebaseConfig = {
     }
   }
 
+function loadHeartRateRealtime() {
+  const deviceId = "4a9941"; // Ganti sesuai device
+  const heartRatePath = "heartRateData/" + deviceId;
+
+  rtdb.ref(heartRatePath)
+    .orderByKey()
+    .limitToLast(20) // Ambil 20 data terakhir
+    .on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        console.log("Data kosong");
+        return;
+      }
+
+      // Urutkan berdasarkan timestamp jam
+      const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+      const labels = entries.map(([time]) => `${time}:00`);
+      const bpms = entries.map(([_, bpm]) => bpm);
+
+      // Tampilkan yang terakhir
+      currentHeartRateEl.textContent = bpms[bpms.length - 1];
+      updateHeartChart(labels, bpms);
+    });
+}
+
+  
   function loadHeartRateData() {
     const currentHeartRateEl = document.getElementById('currentHeartRate');
     const heartCtx = document.getElementById('heartRateGraph').getContext('2d');
