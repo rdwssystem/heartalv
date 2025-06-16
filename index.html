@@ -222,13 +222,15 @@
   /* Heart rate graph container */
   #heartRateGraph, #dailyGraph, #monthlyProgress {
     max-width: 700px;
-    max-height: 400px;
+     max-height: 400px;
     margin: 20px auto 0 auto;
     height: 200px;
     background: #1e293b;
     border-radius: 16px;
     box-shadow: inset 0 0 12px #22d3ee55;
   }
+
+
 
   /* Date navigation */
   .date-nav {
@@ -412,21 +414,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
- const firebaseConfig = {
-  apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
-  authDomain: "heartalv-bbb9f.firebaseapp.com",
-  databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app", // WAJIB ADA
-  projectId: "heartalv-bbb9f",
-  storageBucket: "heartalv-bbb9f.appspot.com",
-  messagingSenderId: "419949588771",
-  appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+    authDomain: "heartalv-bbb9f.firebaseapp.com",
+    projectId: "heartalv-bbb9f",
+    storageBucket: "heartalv-bbb9f.firebasestorage.app",
+    messagingSenderId: "419949588771",
+    appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
+  };
 
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
-  const rtdb = firebase.database();
-  const currentHeartRateEl = document.getElementById("currentHeartRate");
 
   const views = {
     register: document.getElementById('register-view'),
@@ -447,7 +446,8 @@
   // Navigation Buttons
   navButtons.register.addEventListener('click', () => switchView('register'));
   navButtons.login.addEventListener('click', () => switchView('login'));
-  navButtons.dashboard.addEventListener('click', () => switch
+  navButtons.dashboard.addEventListener('click', () => switchView('dashboardMain'));
+
   // Dashboard menu items
   const menuItems = document.querySelectorAll('.menu-item');
   menuItems.forEach(item => {
@@ -671,36 +671,10 @@
     currentHeartRateEl.textContent = bpm;
     drawHeartChart();
   }
-
-// Fungsi untuk ambil data heart rate dari Realtime Database
-function loadHeartRateRealtime() {
-  const deviceId = "4a9941"; // Ganti sesuai device
-  const heartRatePath = "heartRateData/" + deviceId;
-
-  rtdb.ref(heartRatePath)
-    .orderByKey()
-    .limitToLast(20) // Ambil 20 data terakhir
-    .on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        console.log("Data kosong");
-        return;
-      }
-
-      // Urutkan berdasarkan timestamp jam
-      const entries = Object.entries(data).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-
-      const labels = entries.map(([time]) => `${time}:00`);
-      const bpms = entries.map(([_, bpm]) => bpm);
-
-      // Tampilkan yang terakhir
-      currentHeartRateEl.textContent = bpms[bpms.length - 1];
-      updateHeartChart(labels, bpms);
-    });
-}
-  
 function loadHeartRateData() {
   loadHeartRateRealtime(); // ambil data realtime
+    if(window.heartRateInterval) clearInterval(window.heartRateInterval);
+    window.heartRateInterval = setInterval(simulateHeartRateStream, 3000);
   }
 
   // Daily and monthly charts
@@ -744,30 +718,10 @@ function loadHeartRateData() {
       }
     });
   }
-function loadDailyGraphData() {
-  const deviceId = "4a9941";
-  const path = "heartRateData/" + deviceId;
-
-  rtdb.ref(path).once("value", (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
-
-    // Siapkan array 24 jam
-    const hourly = Array(24).fill(null);
-    Object.entries(data).forEach(([jam, bpm]) => {
-      const hour = parseInt(jam);
-      if (!isNaN(hour) && hour >= 0 && hour < 24) {
-        hourly[hour] = bpm;
-      }
-    });
-
-    // Ganti nilai null dengan 0 atau "-" jika mau
-    const finalData = hourly.map(v => v !== null ? v : 0);
-    drawDailyGraph(finalData);
-  });
-}
-
-
+  function loadDailyGraphData() {
+    const data = generateDailyData();
+    drawDailyGraph(data);
+  }
 
   function generateMonthlyData() {
     const data = [];
@@ -798,17 +752,10 @@ function loadDailyGraphData() {
       }
     });
   }
- function loadMonthlyProgress() {
-  const data = [];
-
-  // Simulasi 30 hari dengan data acak fix
-  for (let i = 1; i <= 30; i++) {
-    const simulatedBPM = 70 + Math.round(Math.sin(i / 3) * 10); // pola naik turun
-    data.push(simulatedBPM);
+  function loadMonthlyProgress() {
+    const data = generateMonthlyData();
+    drawMonthlyProgress(data);
   }
-
-  drawMonthlyProgress(data);
-}
 
   document.getElementById('prev-day').addEventListener('click', () => {
     currentDate.setDate(currentDate.getDate()-1);
@@ -840,15 +787,35 @@ function loadDailyGraphData() {
   });
   const rtdb = firebase.database();
 
+// Fungsi untuk ambil data heart rate dari Realtime Database
+function loadHeartRateRealtime() {
+  const deviceId = "4a9941"; // bisa diganti dinamis nanti
+  const heartRatePath = "heartRateData/" + deviceId;
 
-window.addEventListener('load', () => {
-  loadHeartRateRealtime();
-  loadDailyGraphData();
-  loadMonthlyProgress();
-});
+  // Urutkan berdasarkan key dan ambil satu yang terakhir
+  rtdb.ref(heartRatePath)
+    .orderByKey()
+    .limitToLast(1)
+    .on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        console.log("Tidak ada data detak jantung.");
+        return;
+      }
+
+      // Ambil entri terbaru
+      const [latestTime, latestBPM] = Object.entries(data)[0];
+      console.log(`Terbaru: ${latestTime}: ${latestBPM}`);
+
+      // Tampilkan ke UI
+      currentHeartRateEl.textContent = latestBPM;
+
+      // Update grafik (misal histori 5 titik terakhir)
+      updateHeartChart([`${latestTime}:00`], [latestBPM]);
+    });
+}
 
 
 </script>
 </body>
 </html>
-
