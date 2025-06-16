@@ -691,10 +691,17 @@
       if(heartRateRef) {
         heartRateRef.off();
       }
-      
+      // Simulasi kirim data BPM setiap 1 detik (jika user sudah login)
+
       const deviceId = "demo-device"; // Ganti dengan device ID user
       heartRateRef = rtdb.ref(`heartRateData/${deviceId}`);
-      
+      if (currentUser) {
+  setInterval(() => {
+    const bpm = 70 + Math.floor(Math.random() * 20); // BPM acak 70-90
+    heartRateRef.set(bpm); // Kirim ke Firebase
+    console.log("Data BPM dikirim:", bpm); // Cek di Console
+  }, 1000);
+}
       heartRateRef.on('value', (snapshot) => {
         const bpm = snapshot.val();
         if(bpm !== null) {
@@ -710,6 +717,13 @@
             currentHeartRateEl.style.color = '#22d3ee';
           }
         }
+        heartRateRef.on('value', (snapshot) => {
+  console.log("Data diterima dari Firebase:", snapshot.val()); // Harus muncul di Console
+  if (snapshot.exists()) {
+    updateEKGChart(snapshot.val());
+  } else {
+    console.warn("Data di Firebase kosong!");
+  }
       });
     }
 
