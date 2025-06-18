@@ -36,7 +36,7 @@
         <canvas id="ekgCanvas" width="400" height="200"></canvas>
     </div>
 
-    <script type="module">
+   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
@@ -57,14 +57,13 @@
     const heartRateRef = ref(database, 'heartRateData/demo-device');
 
     let currentBPM = 0;
-    let lastValidBPM = 0; // Menyimpan nilai BPM terakhir yang valid
 
     onValue(heartRateRef, (snapshot) => {
         const data = snapshot.val();
         console.log("Data dari Firebase:", data);
         
         if (data) {
-            let foundValidValue = false;
+            let foundValue = false;
             
             // Cari nilai BPM terbaru (termasuk 0)
             const dates = Object.keys(data).sort().reverse();
@@ -72,30 +71,20 @@
                 if (data[date] && typeof data[date] === 'object') {
                     const times = Object.keys(data[date]).sort().reverse();
                     for (const time of times) {
-                        const bpmValue = data[date][time];
-                        // Perbarui nilai terakhir yang valid jika bukan 0
-                        if (bpmValue !== 0) {
-                            lastValidBPM = bpmValue;
-                        }
-                        // Tampilkan nilai saat ini (bisa 0 atau bukan)
-                        currentBPM = bpmValue;
+                        currentBPM = data[date][time];
                         document.getElementById('bpm').innerText = currentBPM;
-                        foundValidValue = true;
+                        foundValue = true;
                         break;
                     }
                 } else if (data[date] !== undefined) {
-                    // Jika data langsung (bukan object)
                     currentBPM = data[date];
-                    if (currentBPM !== 0) {
-                        lastValidBPM = currentBPM;
-                    }
                     document.getElementById('bpm').innerText = currentBPM;
-                    foundValidValue = true;
+                    foundValue = true;
                 }
-                if (foundValidValue) break;
+                if (foundValue) break;
             }
             
-            if (!foundValidValue) {
+            if (!foundValue) {
                 currentBPM = 0;
                 document.getElementById('bpm').innerText = "0";
             }
@@ -109,7 +98,7 @@
     });
 
     function drawGrid(ctx, width, height) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+        ctx.strokeStyle = 'rgba(0, 204, 255, 0.3)';
         ctx.lineWidth = 0.5;
 
         for (let i = 0; i < width; i += 20) {
@@ -132,39 +121,71 @@
         const ctx = canvas.getContext('2d');
         drawGrid(ctx, canvas.width, canvas.height);
 
-        setInterval(() => {
-            drawEKG(ctx);
-        }, 100);
+        // Variabel untuk animasi EKG
+        let phase = 0;
+        let lastBPM = 0;
+        let flatlineTimer = 0;
+        
+        function animateEKG() {
+            // Bersihkan canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid(ctx, canvas.width, canvas.height);
+            
+            const centerY = canvas.height / 2;
+            
+            // Jika BPM = 0, tampilkan flatline
+            if (currentBPM === 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(canvas.width, centerY);
+                ctx.strokeStyle = '#ff0000'; // Warna merah untuk flatline
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                phase = 0; // Reset phase
+            } 
+            // Jika BPM > 0, tampilkan gelombang EKG normal
+            else {
+                const amplitude = 30;
+                const speed = 0.05 + (currentBPM / 1000); // Kecepatan berdasarkan BPM
+                
+                // Gambar gelombang EKG
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                
+                for (let x = 0; x < canvas.width; x++) {
+                    let y = centerY;
+                    const adjustedPhase = phase + x * speed;
+                    
+                    // Detak jantung (spike) setiap interval tertentu
+                    const spikeInterval = canvas.width / (currentBPM / 60 * 3);
+                    const spikePos = x % spikeInterval;
+                    
+                    if (spikePos < 5) {
+                        // Spike EKG
+                        y = centerY - amplitude * (5 - spikePos);
+                    } else if (spikePos < 15) {
+                        // Kembali ke baseline
+                        y = centerY;
+                    } else {
+                        // Gelombang kecil
+                        y = centerY - Math.sin(adjustedPhase * 0.2) * 5;
+                    }
+                    
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = '#00ccff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                phase += speed * 0.5;
+            }
+            
+            requestAnimationFrame(animateEKG);
+        }
+        
+        animateEKG();
     };
-
-    let ekgData = [];
-    let ekgIndex = 0;
-
-    function drawEKG(ctx) {
-        const canvas = document.getElementById('ekgCanvas');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawGrid(ctx, canvas.width, canvas.height);
-
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
-        
-        // Gunakan lastValidBPM jika currentBPM 0
-        const effectiveBPM = currentBPM !== 0 ? currentBPM : lastValidBPM;
-        const ekgValue = Math.sin(ekgIndex * (Math.PI / 15)) * (effectiveBPM / 2) + (canvas.height / 2);
-        ekgData.push(ekgValue);
-        ekgIndex++;
-
-        for (let i = 0; i < ekgData.length; i++) {
-            ctx.lineTo(i, ekgData[i]);
-        }
-        
-        ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
-        ctx.stroke();
-
-        if (ekgData.length > canvas.width) {
-            ekgData.shift();
-        }
-    }
 </script>
 </body>
 </html>
