@@ -1,39 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Realtime EKG Monitor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Heart Rate Monitor</title>
   <style>
     body {
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
       margin: 0;
-      background-color: black;
-      color: lime;
-      font-family: monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      margin-top: 20px;
+      padding: 0;
     }
 
     canvas {
-      background-color: #000;
+      display: block;
+      margin: 0 auto;
       border: 2px solid #0f0;
+      background-color: #000;
     }
 
     #bpm {
-      font-size: 32px;
-      margin-bottom: 10px;
-      color: #00ff00;
+      font-size: 48px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>Realtime EKG BPM Monitor</h1>
-  <div id="bpm">BPM: 0</div>
-  <canvas id="ekgCanvas" width="800" height="200"></canvas>
+  <h1>Detak Jantung (BPM)</h1>
+  <div id="bpm">0</div>
+  <canvas id="ekgCanvas" width="800" height="300"></canvas>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -51,113 +48,101 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const heartRateRef = ref(db, "heartRateData/demo-device");
+    const database = getDatabase(app);
+
+    const heartRateRef = ref(database, 'heartRateData/demo-device');
 
     let currentBPM = 0;
     let targetBPM = 0;
-    let lastUpdateTime = Date.now();
-    let transitionStartTime = 0;
-    const TRANSITION_DURATION = 800;
+    let lastValidBPM = 75; // Default BPM awal
+    let transitionStartTime = Date.now();
+    const TRANSITION_DURATION = 1000;
 
     onValue(heartRateRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const dates = Object.keys(data).sort().reverse();
         for (const date of dates) {
-          const times = Object.keys(data[date] || {}).sort().reverse();
-          for (const time of times) {
-            const bpm = data[date][time];
-            if (bpm !== null && bpm !== undefined) {
-              targetBPM = bpm;
-              transitionStartTime = Date.now();
-              lastUpdateTime = Date.now();
-              return;
+          if (typeof data[date] === "object") {
+            const times = Object.keys(data[date]).sort().reverse();
+            for (const time of times) {
+              const bpmValue = data[date][time];
+              if (bpmValue > 0) {
+                targetBPM = bpmValue;
+                lastValidBPM = bpmValue;
+                transitionStartTime = Date.now();
+                return;
+              }
             }
           }
         }
       }
+      // Jika tidak ada data valid, gunakan BPM terakhir yang valid
+      targetBPM = lastValidBPM;
+      transitionStartTime = Date.now();
     });
+
+    function drawGrid(ctx, width, height) {
+      ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i < width; i += 20) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, height);
+        ctx.stroke();
+      }
+      for (let j = 0; j < height; j += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, j);
+        ctx.lineTo(width, j);
+        ctx.stroke();
+      }
+    }
 
     function smoothStep(start, end, progress) {
       progress = Math.min(1, Math.max(0, progress));
       return start + (end - start) * (progress * progress * (3 - 2 * progress));
     }
 
-    function drawGrid(ctx, width, height) {
-      ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
-      ctx.lineWidth = 0.5;
-
-      for (let x = 0; x < width; x += 20) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-
-      for (let y = 0; y < height; y += 20) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-    }
-
-    window.onload = () => {
-      const canvas = document.getElementById("ekgCanvas");
-      const ctx = canvas.getContext("2d");
+    window.onload = function () {
+      const canvas = document.getElementById('ekgCanvas');
+      const ctx = canvas.getContext('2d');
+      drawGrid(ctx, canvas.width, canvas.height);
 
       let ekgData = [];
       let ekgIndex = 0;
 
-      function animateEKG() {
+      function animateECG() {
         const now = Date.now();
         const transitionProgress = (now - transitionStartTime) / TRANSITION_DURATION;
         currentBPM = smoothStep(currentBPM, targetBPM, transitionProgress);
-        const bpmDisplay = document.getElementById("bpm");
-        bpmDisplay.innerText = "BPM: " + Math.round(currentBPM);
+        document.getElementById('bpm').innerText = Math.round(currentBPM);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid(ctx, canvas.width, canvas.height);
 
         const centerY = canvas.height / 2;
-
-        // Generate spike pattern
-        let spike = 0;
-        const spikePeriod = Math.floor((60 / Math.max(currentBPM, 1)) * 60); // prevent division by 0
-
-        if (ekgIndex % spikePeriod === 0) {
-          spike = -35;
-        } else if (ekgIndex % spikePeriod === 1) {
-          spike = 40;
-        } else if (ekgIndex % spikePeriod === 2) {
-          spike = -20;
-        } else {
-          spike = (Math.random() - 0.5) * 2; // small noise
-        }
-
-        const ekgY = centerY + spike;
-        ekgData.push(ekgY);
+        const ekgValue = Math.sin(ekgIndex * (Math.PI / 15)) * (currentBPM / 3) + centerY;
+        ekgData.push(ekgValue);
         ekgIndex++;
+
+        ctx.beginPath();
+        ctx.moveTo(0, ekgData[0]);
+        for (let i = 0; i < ekgData.length; i++) {
+          ctx.lineTo(i, ekgData[i]);
+        }
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
         if (ekgData.length > canvas.width) {
           ekgData.shift();
         }
 
-        ctx.beginPath();
-        ctx.moveTo(0, ekgData[0]);
-        for (let i = 1; i < ekgData.length; i++) {
-          ctx.lineTo(i, ekgData[i]);
-        }
-
-        ctx.strokeStyle = "#00FF00";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        requestAnimationFrame(animateEKG);
+        requestAnimationFrame(animateECG);
       }
 
-      animateEKG();
+      animateECG();
     };
   </script>
 </body>
