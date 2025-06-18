@@ -12,65 +12,81 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            justify-content: flex-start; /* Diubah dari center ke flex-start */
+            min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 20px; /* Tambahkan padding untuk mobile */
             box-sizing: border-box;
         }
         h1 {
             margin-bottom: 10px;
-            text-align: center;
-            font-size: 2.5em; /* Ukuran font judul lebih besar */
+            text-align: center; /* Pusatkan judul */
+            width: 100%; /* Pastikan mengambil lebar penuh */
         }
         p {
             margin-bottom: 20px;
             text-align: center;
-            font-size: 1.2em; /* Ukuran font deskripsi lebih besar */
+            width: 100%; /* Pastikan mengambil lebar penuh */
         }
-        .icon {
-            font-size: 80px; /* Ukuran ikon hati lebih besar */
-            margin: 20px 0;
+        .main-icon {
+            font-size: 50px;
+            margin: 10px 0 20px; /* Sesuaikan margin */
+            text-align: center;
+            width: 100%;
         }
         .menu {
             display: flex;
-            flex-wrap: wrap; /* Membuat menu responsif */
+            flex-wrap: wrap; /* Untuk responsif di mobile */
             justify-content: center;
             width: 100%;
             max-width: 600px;
             margin-top: 20px;
+            gap: 10px; /* Jarak antar menu item */
         }
         .menu-item {
-            background-color: #003366; /* Warna latar belakang menu */
-            padding: 20px;
+            background-color: #003366;
+            padding: 15px;
             border-radius: 8px;
             text-align: center;
-            flex: 1 1 45%; /* Mengatur ukuran item menu */
-            margin: 10px; /* Menambahkan margin antar item */
+            flex: 1 1 120px; /* Fleksibel tapi minimal 120px */
+            min-width: 120px; /* Lebar minimal untuk mobile */
             transition: background-color 0.3s;
+            margin: 5px; /* Jarak antar item */
         }
         .menu-item:hover {
-            background-color: #00bfff; /* Biru muda menyala saat hover */
+            background-color: #00bfff;
         }
         .menu-item a {
             color: #ffffff;
             text-decoration: none;
             display: block;
         }
-
-        /* Media Queries untuk tampilan yang lebih baik di perangkat kecil */
-        @media (max-width: 600px) {
-            .menu-item {
-                flex: 1 1 100%; /* Item menu mengambil 100% lebar pada perangkat kecil */
-            }
-            .icon {
-                font-size: 60px; /* Ukuran ikon lebih kecil di perangkat kecil */
+        .menu-icon {
+            font-size: 30px; /* Ukuran ikon menu lebih kecil */
+            margin-bottom: 10px;
+        }
+        
+        /* Media query untuk tampilan mobile */
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+                justify-content: flex-start;
             }
             h1 {
-                font-size: 2em; /* Ukuran font judul lebih kecil di perangkat kecil */
+                font-size: 1.5rem; /* Ukuran font lebih kecil di mobile */
+                margin-top: 10px;
             }
-            p {
-                font-size: 1em; /* Ukuran font deskripsi lebih kecil di perangkat kecil */
+            .main-icon {
+                font-size: 40px; /* Ukuran ikon utama lebih kecil di mobile */
+                margin: 5px 0 15px;
+            }
+            .menu {
+                flex-direction: row; /* Tetap dalam baris */
+                flex-wrap: wrap;
+            }
+            .menu-item {
+                flex: 1 1 40%; /* Dua kolom di mobile */
+                padding: 12px;
             }
         }
     </style>
@@ -78,30 +94,30 @@
 <body>
     <h1>DASHBOARD MOVEMIND CONTROL</h1>
     <p>"Move and Remind Your Body"<br>Pantau gerak kecil, Raih perubahan besar. Pengingat cerdas untuk tubuh aktif.</p>
-    <div class="icon">❤️</div> <!-- Ikon hati -->
+    <div class="main-icon">❤️</div> <!-- Ikon hati utama -->
 
     <div class="menu">
         <div class="menu-item">
-            <a href="https://github.com/username/repo/heart-rate.html"> <!-- Ganti dengan URL yang sesuai -->
-                <div class="icon">❤️</div> <!-- Ikon hati -->
+            <a href="https://github.com/username/repo/heart-rate.html">
+                <div class="menu-icon">❤️</div>
                 <p>Heart Rate</p>
             </a>
         </div>
         <div class="menu-item">
-            <a href="https://github.com/username/repo/graphic.html"> <!-- Ganti dengan URL yang sesuai -->
-                <div class="icon">📊</div> <!-- Ikon grafik -->
+            <a href="https://github.com/username/repo/graphic.html">
+                <div class="menu-icon">📊</div>
                 <p>Graphic</p>
             </a>
         </div>
         <div class="menu-item">
-            <a href="https://github.com/username/repo/progress.html"> <!-- Ganti dengan URL yang sesuai -->
-                <div class="icon">📈</div> <!-- Ikon progres -->
+            <a href="https://github.com/username/repo/progress.html">
+                <div class="menu-icon">📈</div>
                 <p>Progress</p>
             </a>
         </div>
         <div class="menu-item">
-            <a href="https://github.com/username/repo/profile.html"> <!-- Ganti dengan URL yang sesuai -->
-                <div class="icon">👤</div> <!-- Ikon profil -->
+            <a href="https://github.com/username/repo/profile.html">
+                <div class="menu-icon">👤</div>
                 <p>Profile</p>
             </a>
         </div>
