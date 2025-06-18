@@ -107,17 +107,19 @@
     });
 
     function drawGrid(ctx, width, height) {
-        ctx.strokeStyle = 'rgba(0, 204, 255, 0.2)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 1)'; // Garis grid berwarna hitam
         ctx.lineWidth = 0.5;
 
-        for (let i = 0; i < width; i += 25) {
+        // Menggambar garis vertikal
+        for (let i = 0; i < width; i += 20) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
             ctx.lineTo(i, height);
             ctx.stroke();
         }
 
-        for (let j = 0; j < height; j += 25) {
+        // Menggambar garis horizontal
+        for (let j = 0; j < height; j += 20) {
             ctx.beginPath();
             ctx.moveTo(0, j);
             ctx.lineTo(width, j);
@@ -136,51 +138,9 @@
         const ctx = canvas.getContext('2d');
         drawGrid(ctx, canvas.width, canvas.height);
 
-        // Buffer untuk menyimpan titik-titik EKG
-        const bufferSize = canvas.width;
-        let ecgBuffer = Array(bufferSize).fill(canvas.height/2);
-        let lastBeatTime = 0;
-        let phase = 0;
+        let ekgData = [];
+        let ekgIndex = 0;
         
-        function generateECGPoint(x, bpm, time) {
-            const centerY = canvas.height / 2;
-            const amplitude = 40;
-            const beatInterval = (60 / bpm) * 1000;
-            const beatPhase = (time % beatInterval) / beatInterval;
-            
-            // Jika BPM 0, kembalikan garis lurus
-            if (bpm <= 0) return centerY;
-            
-            // Posisi dalam siklus detak jantung (0-1)
-            const posInBeat = (x % 100) / 100;
-            
-            // Gelombang P (depolarisasi atrium)
-            if (posInBeat >= 0.0 && posInBeat < 0.15) {
-                const pProgress = (posInBeat - 0.0) / 0.15;
-                return centerY - Math.sin(pProgress * Math.PI) * amplitude * 0.2;
-            }
-            // Kompleks QRS (depolarisasi ventrikel)
-            else if (posInBeat >= 0.15 && posInBeat < 0.25) {
-                if (posInBeat < 0.17) { // Gelombang Q
-                    return centerY + amplitude * 0.3;
-                } else if (posInBeat < 0.20) { // Gelombang R
-                    return centerY - amplitude * 0.9;
-                } else { // Gelombang S
-                    return centerY + amplitude * 0.4;
-                }
-            }
-            // Gelombang T (repolarisasi ventrikel)
-            else if (posInBeat >= 0.35 && posInBeat < 0.50) {
-                const tProgress = (posInBeat - 0.35) / 0.15;
-                return centerY - Math.sin(tProgress * Math.PI) * amplitude * 0.3;
-            }
-            // Baseline
-            else {
-                // Tambahkan sedikit noise untuk realism
-                return centerY + Math.sin(time * 0.01 + x * 0.1) * 2;
-            }
-        }
-
         function animateECG() {
             const now = Date.now();
             const timeSinceLastUpdate = now - lastUpdateTime;
@@ -207,27 +167,30 @@
                 ctx.stroke();
                 
                 // Reset buffer
-                ecgBuffer.fill(centerY);
+                ekgData = [];
+                ekgIndex = 0;
             } else {
-                // Geser buffer ke kiri
-                ecgBuffer.shift();
-                
-                // Tambahkan titik baru di akhir buffer
-                const newPoint = generateECGPoint(phase, currentBPM, now);
-                ecgBuffer.push(newPoint);
-                phase += 1;
+                // Simulasi data EKG menggunakan nilai BPM
+                const ekgValue = Math.sin(ekgIndex * (Math.PI / 15)) * (currentBPM / 2) + centerY;
+                ekgData.push(ekgValue);
+                ekgIndex++;
                 
                 // Gambar garis EKG
                 ctx.beginPath();
-                ctx.moveTo(0, ecgBuffer[0]);
+                ctx.moveTo(0, ekgData[0]);
                 
-                for (let x = 1; x < ecgBuffer.length; x++) {
-                    ctx.lineTo(x, ecgBuffer[x]);
+                for (let i = 0; i < ekgData.length; i++) {
+                    ctx.lineTo(i, ekgData[i]);
                 }
                 
-                ctx.strokeStyle = '#00ccff';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // Mengubah warna grafik menjadi putih lebih terang
                 ctx.lineWidth = 2;
                 ctx.stroke();
+            }
+            
+            // Menggeser data EKG untuk animasi
+            if (ekgData.length > canvas.width) {
+                ekgData.shift();
             }
             
             requestAnimationFrame(animateECG);
