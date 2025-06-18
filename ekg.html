@@ -57,7 +57,10 @@
     const heartRateRef = ref(database, 'heartRateData/demo-device');
 
     let currentBPM = 0;
+    let targetBPM = 0;
     let lastUpdateTime = Date.now();
+    let transitionStartTime = 0;
+    const TRANSITION_DURATION = 800; // Durasi transisi dalam milidetik
 
     onValue(heartRateRef, (snapshot) => {
         const data = snapshot.val();
@@ -73,16 +76,16 @@
                     for (const time of times) {
                         const bpmValue = data[date][time];
                         if (bpmValue !== null && bpmValue !== undefined) {
-                            currentBPM = bpmValue;
-                            document.getElementById('bpm').innerText = currentBPM;
+                            targetBPM = bpmValue;
+                            transitionStartTime = Date.now();
                             lastUpdateTime = Date.now();
                             foundValue = true;
                             break;
                         }
                     }
                 } else if (data[date] !== null && data[date] !== undefined) {
-                    currentBPM = data[date];
-                    document.getElementById('bpm').innerText = currentBPM;
+                    targetBPM = data[date];
+                    transitionStartTime = Date.now();
                     lastUpdateTime = Date.now();
                     foundValue = true;
                 }
@@ -90,23 +93,23 @@
             }
             
             if (!foundValue) {
-                currentBPM = 0;
-                document.getElementById('bpm').innerText = "0";
+                targetBPM = 0;
+                transitionStartTime = Date.now();
             }
         } else {
-            currentBPM = 0;
-            document.getElementById('bpm').innerText = "Data tidak tersedia";
+            targetBPM = 0;
+            transitionStartTime = Date.now();
         }
     }, (error) => {
         console.error("Error fetching data: ", error);
-        document.getElementById('bpm').innerText = "Error";
+        targetBPM = 0;
+        transitionStartTime = Date.now();
     });
 
     function drawGrid(ctx, width, height) {
         ctx.strokeStyle = 'rgba(0, 204, 255, 0.2)';
         ctx.lineWidth = 0.5;
 
-        // Garis vertikal (setiap 25px)
         for (let i = 0; i < width; i += 25) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
@@ -114,7 +117,6 @@
             ctx.stroke();
         }
 
-        // Garis horizontal (setiap 25px)
         for (let j = 0; j < height; j += 25) {
             ctx.beginPath();
             ctx.moveTo(0, j);
@@ -123,80 +125,79 @@
         }
     }
 
+    function smoothStep(start, end, progress) {
+        // Fungsi easing untuk transisi yang halus
+        progress = Math.min(1, Math.max(0, progress));
+        return start + (end - start) * (progress * progress * (3 - 2 * progress));
+    }
+
     window.onload = function() {
         const canvas = document.getElementById('ekgCanvas');
         const ctx = canvas.getContext('2d');
         drawGrid(ctx, canvas.width, canvas.height);
 
-        // Variabel untuk animasi EKG
-        let xPos = 0;
+        // Buffer untuk menyimpan titik-titik EKG
+        const bufferSize = canvas.width;
+        let ecgBuffer = Array(bufferSize).fill(canvas.height/2);
         let lastBeatTime = 0;
-        const dataPoints = Array(canvas.width).fill(canvas.height/2);
+        let phase = 0;
         
-        function drawECGBeat(ctx, startX, bpm) {
+        function generateECGPoint(x, bpm, time) {
             const centerY = canvas.height / 2;
             const amplitude = 40;
-            const beatDuration = (60 / bpm) * 1000; // ms per beat
-            const samplesPerBeat = 200;
-            const samplesPerMs = samplesPerBeat / beatDuration;
+            const beatInterval = (60 / bpm) * 1000;
+            const beatPhase = (time % beatInterval) / beatInterval;
             
-            // Simpan titik-titik gelombang EKG
-            const points = [];
+            // Jika BPM 0, kembalikan garis lurus
+            if (bpm <= 0) return centerY;
             
-            // Gelombang P (atrium depolarization)
-            for (let i = 0; i < 20; i++) {
-                const x = startX + i;
-                const pProgress = i / 20;
-                const y = centerY - Math.sin(pProgress * Math.PI) * amplitude * 0.2;
-                points.push({x, y});
+            // Posisi dalam siklus detak jantung (0-1)
+            const posInBeat = (x % 100) / 100;
+            
+            // Gelombang P (depolarisasi atrium)
+            if (posInBeat >= 0.0 && posInBeat < 0.15) {
+                const pProgress = (posInBeat - 0.0) / 0.15;
+                return centerY - Math.sin(pProgress * Math.PI) * amplitude * 0.2;
             }
-            
-            // Segmen PR
-            for (let i = 20; i < 40; i++) {
-                const x = startX + i;
-                const y = centerY;
-                points.push({x, y});
+            // Kompleks QRS (depolarisasi ventrikel)
+            else if (posInBeat >= 0.15 && posInBeat < 0.25) {
+                if (posInBeat < 0.17) { // Gelombang Q
+                    return centerY + amplitude * 0.3;
+                } else if (posInBeat < 0.20) { // Gelombang R
+                    return centerY - amplitude * 0.9;
+                } else { // Gelombang S
+                    return centerY + amplitude * 0.4;
+                }
             }
-            
-            // Kompleks QRS (ventrikel depolarization)
-            const qrsDuration = 10;
-            // Gelombang Q
-            points.push({x: startX + 40, y: centerY});
-            points.push({x: startX + 42, y: centerY + amplitude * 0.3});
-            // Gelombang R
-            points.push({x: startX + 44, y: centerY - amplitude * 0.9});
-            // Gelombang S
-            points.push({x: startX + 46, y: centerY + amplitude * 0.4});
-            points.push({x: startX + 48, y: centerY});
-            
-            // Segmen ST
-            for (let i = 50; i < 70; i++) {
-                const x = startX + i;
-                const y = centerY;
-                points.push({x, y});
+            // Gelombang T (repolarisasi ventrikel)
+            else if (posInBeat >= 0.35 && posInBeat < 0.50) {
+                const tProgress = (posInBeat - 0.35) / 0.15;
+                return centerY - Math.sin(tProgress * Math.PI) * amplitude * 0.3;
             }
-            
-            // Gelombang T (ventrikel repolarization)
-            for (let i = 70; i < 100; i++) {
-                const x = startX + i;
-                const tProgress = (i - 70) / 30;
-                const y = centerY - Math.sin(tProgress * Math.PI) * amplitude * 0.3;
-                points.push({x, y});
+            // Baseline
+            else {
+                // Tambahkan sedikit noise untuk realism
+                return centerY + Math.sin(time * 0.01 + x * 0.1) * 2;
             }
-            
-            return points;
         }
 
         function animateECG() {
+            const now = Date.now();
+            const timeSinceLastUpdate = now - lastUpdateTime;
+            
+            // Update currentBPM dengan transisi halus
+            const transitionProgress = Math.min(1, (now - transitionStartTime) / TRANSITION_DURATION);
+            currentBPM = smoothStep(currentBPM, targetBPM, transitionProgress);
+            document.getElementById('bpm').innerText = Math.round(currentBPM);
+            
             // Bersihkan canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawGrid(ctx, canvas.width, canvas.height);
             
             const centerY = canvas.height / 2;
-            const now = Date.now();
             
-            // Jika BPM = 0 atau data terlalu lama tidak update
-            if (currentBPM === 0 || (now - lastUpdateTime) > 5000) {
+            // Jika tidak ada data atau BPM 0
+            if (currentBPM <= 0 || timeSinceLastUpdate > 5000) {
                 // Gambar flatline merah
                 ctx.beginPath();
                 ctx.moveTo(0, centerY);
@@ -205,40 +206,23 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
-                // Reset data points
-                dataPoints.fill(centerY);
+                // Reset buffer
+                ecgBuffer.fill(centerY);
             } else {
-                // Hitung waktu sejak detak terakhir
-                const beatInterval = (60 / currentBPM) * 1000; // ms per beat
+                // Geser buffer ke kiri
+                ecgBuffer.shift();
                 
-                // Jika waktunya untuk detak baru
-                if (now - lastBeatTime > beatInterval) {
-                    lastBeatTime = now;
-                    
-                    // Generate pola EKG untuk satu detak jantung
-                    const beatPoints = drawECGBeat(ctx, 0, currentBPM);
-                    
-                    // Geser data points yang ada ke kiri
-                    const shiftAmount = beatPoints.length;
-                    for (let i = 0; i < dataPoints.length - shiftAmount; i++) {
-                        dataPoints[i] = dataPoints[i + shiftAmount];
-                    }
-                    
-                    // Tambahkan data points baru di akhir
-                    for (let i = 0; i < beatPoints.length; i++) {
-                        const pos = dataPoints.length - shiftAmount + i;
-                        if (pos >= 0 && pos < dataPoints.length) {
-                            dataPoints[pos] = beatPoints[i].y;
-                        }
-                    }
-                }
+                // Tambahkan titik baru di akhir buffer
+                const newPoint = generateECGPoint(phase, currentBPM, now);
+                ecgBuffer.push(newPoint);
+                phase += 1;
                 
                 // Gambar garis EKG
                 ctx.beginPath();
-                ctx.moveTo(0, dataPoints[0]);
+                ctx.moveTo(0, ecgBuffer[0]);
                 
-                for (let x = 1; x < dataPoints.length; x++) {
-                    ctx.lineTo(x, dataPoints[x]);
+                for (let x = 1; x < ecgBuffer.length; x++) {
+                    ctx.lineTo(x, ecgBuffer[x]);
                 }
                 
                 ctx.strokeStyle = '#00ccff';
