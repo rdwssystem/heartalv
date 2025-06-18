@@ -1,183 +1,117 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Grafik Detak Jantung</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #ffffff;
-      color: #000000;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafik Rekaman Harian BPM</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #000000, #00bfff);
+            color: white;
+        }
 
-    h1 {
-      margin-top: 20px;
-      color: #000000;
-    }
+        .container {
+            text-align: center;
+            padding: 50px;
+        }
 
-    canvas {
-      background-color: #ffffff;
-      border: 2px solid #333;
-      width: 600px;
-      height: 300px;
-    }
+        button {
+            background-color: #00bfff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
 
-    #backButton, #previousDayButton {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #007acc;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #backButton:hover, #previousDayButton:hover {
-      background-color: #005fa3;
-    }
-
-    #dateLabel {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #000000;
-    }
-  </style>
+        button:hover {
+            background-color: #0080ff;
+        }
+    </style>
 </head>
 <body>
-  <h1>Grafik Detak Jantung</h1>
-  <div id="dateLabel">Tanggal: 2025-6-18</div>
-  <canvas id="heartRateCanvas" width="600" height="300"></canvas>
-  <button id="previousDayButton">Lihat Hari Sebelumnya</button>
-  <button id="backButton">Kembali ke Dashboard</button>
+    <div class="container">
+        <h1>Grafik Rekaman Harian BPM</h1>
+        <canvas id="heartRateChart"></canvas>
+        <button id="backButton">Kembali ke Dashboard</button>
+    </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
-      authDomain: "heartalv-bbb9f.firebaseapp.com",
-      databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "heartalv-bbb9f",
-      storageBucket: "heartalv-bbb9f.appspot.com",
-      messagingSenderId: "419949588771",
-      appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
-      measurementId: "G-8RDRRPGWMW"
-    };
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+            authDomain: "heartalv-bbb9f.firebaseapp.com",
+            databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "heartalv-bbb9f",
+            storageBucket: "heartalv-bbb9f.firebasestorage.app",
+            messagingSenderId: "419949588771",
+            appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
+            measurementId: "G-8RDRRPGWMW"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    let currentDate = '2025-6-18';
-    const dateLabel = document.getElementById('dateLabel');
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    function fetchData(date) {
-      const refData = ref(db, `heartRateData/demo-device/${date}`);
-      onValue(refData, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          drawChart(data);
-          dateLabel.innerText = `Tanggal: ${date}`;
-        } else {
-          clearChart();
+        const heartRateData = [];
+        const timestamps = [];
+
+        const dataRef = ref(db, 'heartRateData/demo-device/2025-6-18');
+        onValue(dataRef, (snapshot) => {
+            const data = snapshot.val();
+            for (const time in data) {
+                timestamps.push(time);
+                heartRateData.push(data[time]);
+            }
+            renderChart();
+        });
+
+        function renderChart() {
+            const ctx = document.getElementById('heartRateChart').getContext('2d');
+            const heartRateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: 'Heart Rate (BPM)',
+                        data: heartRateData,
+                        borderColor: 'rgba(0, 191, 255, 1)',
+                        backgroundColor: 'rgba(0, 191, 255, 0.2)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'BPM'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Waktu'
+                            }
+                        }
+                    }
+                }
+            });
         }
-      });
-    }
 
-    function drawChart(data) {
-      const canvas = document.getElementById("heartRateCanvas");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      drawGrid(ctx);
-
-      const times = Object.keys(data).sort();
-      const values = times.map(time => data[time]);
-
-      const minBPM = 60;
-      const maxBPM = 80;
-      const scaleY = canvas.height / (maxBPM - minBPM);
-
-      ctx.beginPath();
-      times.forEach((time, index) => {
-        const x = (canvas.width / (times.length - 1)) * index;
-        const y = canvas.height - (values[index] - minBPM) * scaleY;
-        if (index === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.strokeStyle = "#cc6600";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Titik merah
-      times.forEach((time, index) => {
-        const x = (canvas.width / (times.length - 1)) * index;
-        const y = canvas.height - (values[index] - minBPM) * scaleY;
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#ff0000";
-        ctx.fill();
-      });
-    }
-
-    function drawGrid(ctx) {
-      ctx.strokeStyle = '#888';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
-
-      const height = ctx.canvas.height;
-      const width = ctx.canvas.width;
-
-      // Horizontal (BPM)
-      for (let y = 0; y <= 5; y++) {
-        const yPos = (height / 5) * y;
-        ctx.beginPath();
-        ctx.moveTo(0, yPos);
-        ctx.lineTo(width, yPos);
-        ctx.stroke();
-
-        const bpm = 80 - (y * 4);
-        ctx.fillStyle = '#000';
-        ctx.setLineDash([]);
-        ctx.fillText(`${bpm} bpm`, 5, yPos - 2);
-        ctx.setLineDash([5, 5]);
-      }
-
-      // Vertikal (Waktu)
-      for (let x = 0; x <= 10; x++) {
-        const xPos = (width / 10) * x;
-        ctx.beginPath();
-        ctx.moveTo(xPos, 0);
-        ctx.lineTo(xPos, height);
-        ctx.stroke();
-      }
-    }
-
-    function clearChart() {
-      const canvas = document.getElementById("heartRateCanvas");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#ff0000";
-      ctx.fillText("Tidak ada data untuk tanggal ini", canvas.width / 4, canvas.height / 2);
-    }
-
-    document.getElementById('previousDayButton').addEventListener('click', () => {
-      const dateParts = currentDate.split('-');
-      const prev = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-      prev.setDate(prev.getDate() - 1);
-      currentDate = `${prev.getFullYear()}-${prev.getMonth() + 1}-${prev.getDate()}`;
-      fetchData(currentDate);
-    });
-
-    document.getElementById('backButton').addEventListener('click', () => {
-      window.location.href = 'dsb.html';
-    });
-
-    fetchData(currentDate);
-  </script>
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = 'dashboard.html'; // Ganti dengan URL dashboard Anda
+        });
+    </script>
 </body>
 </html>
