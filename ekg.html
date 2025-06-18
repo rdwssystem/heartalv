@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Realtime EKG Monitor</title>
+  <title>Realtime BPM Monitor</title>
   <style>
     body {
       margin: 0;
-      background-color: black;
-      color: lime;
+      background-color: #001f3f; /* Latar belakang hitam kebiruan */
+      color: #00ffff; /* Warna font biru muda */
       font-family: monospace;
       display: flex;
       flex-direction: column;
@@ -16,6 +16,7 @@
 
     h1 {
       margin-top: 20px;
+      color: #00ffcc; /* Warna judul yang lebih cerah */
     }
 
     canvas {
@@ -26,13 +27,13 @@
     #bpm {
       font-size: 32px;
       margin-bottom: 10px;
-      color: #00ff00;
+      color: #00ffcc; /* Warna BPM yang lebih cerah */
     }
 
-    #soundToggle {
+    #soundToggle, #backButton {
       margin-top: 20px;
       padding: 10px 20px;
-      background-color: #00aa00;
+      background-color: #007f7f; /* Warna tombol yang lebih gelap */
       color: white;
       border: none;
       border-radius: 5px;
@@ -40,16 +41,17 @@
       font-family: monospace;
     }
 
-    #soundToggle:hover {
-      background-color: #00ff00;
+    #soundToggle:hover, #backButton:hover {
+      background-color: #00ffcc; /* Warna tombol saat hover */
     }
   </style>
 </head>
 <body>
   <h1>Realtime EKG BPM Monitor</h1>
   <div id="bpm">BPM: 0</div>
-  <canvas id="ekgCanvas" width="800" height="200"></canvas>
+  <canvas id="ekgCanvas" width="600" height="150"></canvas> <!-- Ukuran canvas diubah -->
   <button id="soundToggle">Toggle Sound</button>
+  <button id="backButton">Kembali ke Dashboard</button> <!-- Tombol Kembali ke Dashboard -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -81,6 +83,11 @@
       soundEnabled = !soundEnabled;
       document.getElementById('soundToggle').textContent = 
         soundEnabled ? 'Sound: ON' : 'Sound: OFF';
+    });
+
+    // Tombol kembali ke dashboardsb
+    document.getElementById('backButton').addEventListener('click', () => {
+      window.location.href = 'dsb.html'; // Ganti dengan URL dashboard Anda
     });
 
     function playBeep() {
