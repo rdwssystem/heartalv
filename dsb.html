@@ -15,21 +15,27 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
         h1 {
             margin-bottom: 10px;
+            text-align: center;
+            font-size: 2.5em; /* Ukuran font judul lebih besar */
         }
         p {
             margin-bottom: 20px;
             text-align: center;
+            font-size: 1.2em; /* Ukuran font deskripsi lebih besar */
         }
         .icon {
-            font-size: 50px;
+            font-size: 80px; /* Ukuran ikon hati lebih besar */
             margin: 20px 0;
         }
         .menu {
             display: flex;
-            justify-content: space-around;
+            flex-wrap: wrap; /* Membuat menu responsif */
+            justify-content: center;
             width: 100%;
             max-width: 600px;
             margin-top: 20px;
@@ -39,8 +45,8 @@
             padding: 20px;
             border-radius: 8px;
             text-align: center;
-            flex: 1;
-            margin: 0 10px;
+            flex: 1 1 45%; /* Mengatur ukuran item menu */
+            margin: 10px; /* Menambahkan margin antar item */
             transition: background-color 0.3s;
         }
         .menu-item:hover {
@@ -50,6 +56,22 @@
             color: #ffffff;
             text-decoration: none;
             display: block;
+        }
+
+        /* Media Queries untuk tampilan yang lebih baik di perangkat kecil */
+        @media (max-width: 600px) {
+            .menu-item {
+                flex: 1 1 100%; /* Item menu mengambil 100% lebar pada perangkat kecil */
+            }
+            .icon {
+                font-size: 60px; /* Ukuran ikon lebih kecil di perangkat kecil */
+            }
+            h1 {
+                font-size: 2em; /* Ukuran font judul lebih kecil di perangkat kecil */
+            }
+            p {
+                font-size: 1em; /* Ukuran font deskripsi lebih kecil di perangkat kecil */
+            }
         }
     </style>
 </head>
@@ -86,4 +108,3 @@
     </div>
 </body>
 </html>
-
