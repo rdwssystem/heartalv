@@ -36,7 +36,7 @@
         <canvas id="ekgCanvas" width="400" height="200"></canvas>
     </div>
 
-   <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
@@ -57,6 +57,7 @@
     const heartRateRef = ref(database, 'heartRateData/demo-device');
 
     let currentBPM = 0;
+    let lastUpdateTime = Date.now();
 
     onValue(heartRateRef, (snapshot) => {
         const data = snapshot.val();
@@ -64,21 +65,25 @@
         
         if (data) {
             let foundValue = false;
-            
-            // Cari nilai BPM terbaru (termasuk 0)
             const dates = Object.keys(data).sort().reverse();
+            
             for (const date of dates) {
                 if (data[date] && typeof data[date] === 'object') {
                     const times = Object.keys(data[date]).sort().reverse();
                     for (const time of times) {
-                        currentBPM = data[date][time];
-                        document.getElementById('bpm').innerText = currentBPM;
-                        foundValue = true;
-                        break;
+                        const bpmValue = data[date][time];
+                        if (bpmValue !== null && bpmValue !== undefined) {
+                            currentBPM = bpmValue;
+                            document.getElementById('bpm').innerText = currentBPM;
+                            lastUpdateTime = Date.now();
+                            foundValue = true;
+                            break;
+                        }
                     }
-                } else if (data[date] !== undefined) {
+                } else if (data[date] !== null && data[date] !== undefined) {
                     currentBPM = data[date];
                     document.getElementById('bpm').innerText = currentBPM;
+                    lastUpdateTime = Date.now();
                     foundValue = true;
                 }
                 if (foundValue) break;
@@ -94,21 +99,23 @@
         }
     }, (error) => {
         console.error("Error fetching data: ", error);
-        document.getElementById('bpm').innerText = "Error fetching data";
+        document.getElementById('bpm').innerText = "Error";
     });
 
     function drawGrid(ctx, width, height) {
-        ctx.strokeStyle = 'rgba(0, 204, 255, 0.3)';
+        ctx.strokeStyle = 'rgba(0, 204, 255, 0.2)';
         ctx.lineWidth = 0.5;
 
-        for (let i = 0; i < width; i += 20) {
+        // Garis vertikal (setiap 25px)
+        for (let i = 0; i < width; i += 25) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
             ctx.lineTo(i, height);
             ctx.stroke();
         }
 
-        for (let j = 0; j < height; j += 20) {
+        // Garis horizontal (setiap 25px)
+        for (let j = 0; j < height; j += 25) {
             ctx.beginPath();
             ctx.moveTo(0, j);
             ctx.lineTo(width, j);
@@ -122,69 +129,127 @@
         drawGrid(ctx, canvas.width, canvas.height);
 
         // Variabel untuk animasi EKG
-        let phase = 0;
-        let lastBPM = 0;
-        let flatlineTimer = 0;
+        let xPos = 0;
+        let lastBeatTime = 0;
+        const dataPoints = Array(canvas.width).fill(canvas.height/2);
         
-        function animateEKG() {
+        function drawECGBeat(ctx, startX, bpm) {
+            const centerY = canvas.height / 2;
+            const amplitude = 40;
+            const beatDuration = (60 / bpm) * 1000; // ms per beat
+            const samplesPerBeat = 200;
+            const samplesPerMs = samplesPerBeat / beatDuration;
+            
+            // Simpan titik-titik gelombang EKG
+            const points = [];
+            
+            // Gelombang P (atrium depolarization)
+            for (let i = 0; i < 20; i++) {
+                const x = startX + i;
+                const pProgress = i / 20;
+                const y = centerY - Math.sin(pProgress * Math.PI) * amplitude * 0.2;
+                points.push({x, y});
+            }
+            
+            // Segmen PR
+            for (let i = 20; i < 40; i++) {
+                const x = startX + i;
+                const y = centerY;
+                points.push({x, y});
+            }
+            
+            // Kompleks QRS (ventrikel depolarization)
+            const qrsDuration = 10;
+            // Gelombang Q
+            points.push({x: startX + 40, y: centerY});
+            points.push({x: startX + 42, y: centerY + amplitude * 0.3});
+            // Gelombang R
+            points.push({x: startX + 44, y: centerY - amplitude * 0.9});
+            // Gelombang S
+            points.push({x: startX + 46, y: centerY + amplitude * 0.4});
+            points.push({x: startX + 48, y: centerY});
+            
+            // Segmen ST
+            for (let i = 50; i < 70; i++) {
+                const x = startX + i;
+                const y = centerY;
+                points.push({x, y});
+            }
+            
+            // Gelombang T (ventrikel repolarization)
+            for (let i = 70; i < 100; i++) {
+                const x = startX + i;
+                const tProgress = (i - 70) / 30;
+                const y = centerY - Math.sin(tProgress * Math.PI) * amplitude * 0.3;
+                points.push({x, y});
+            }
+            
+            return points;
+        }
+
+        function animateECG() {
             // Bersihkan canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawGrid(ctx, canvas.width, canvas.height);
             
             const centerY = canvas.height / 2;
+            const now = Date.now();
             
-            // Jika BPM = 0, tampilkan flatline
-            if (currentBPM === 0) {
+            // Jika BPM = 0 atau data terlalu lama tidak update
+            if (currentBPM === 0 || (now - lastUpdateTime) > 5000) {
+                // Gambar flatline merah
                 ctx.beginPath();
                 ctx.moveTo(0, centerY);
                 ctx.lineTo(canvas.width, centerY);
-                ctx.strokeStyle = '#ff0000'; // Warna merah untuk flatline
+                ctx.strokeStyle = '#ff0000';
                 ctx.lineWidth = 2;
                 ctx.stroke();
-                phase = 0; // Reset phase
-            } 
-            // Jika BPM > 0, tampilkan gelombang EKG normal
-            else {
-                const amplitude = 30;
-                const speed = 0.05 + (currentBPM / 1000); // Kecepatan berdasarkan BPM
                 
-                // Gambar gelombang EKG
-                ctx.beginPath();
-                ctx.moveTo(0, centerY);
+                // Reset data points
+                dataPoints.fill(centerY);
+            } else {
+                // Hitung waktu sejak detak terakhir
+                const beatInterval = (60 / currentBPM) * 1000; // ms per beat
                 
-                for (let x = 0; x < canvas.width; x++) {
-                    let y = centerY;
-                    const adjustedPhase = phase + x * speed;
+                // Jika waktunya untuk detak baru
+                if (now - lastBeatTime > beatInterval) {
+                    lastBeatTime = now;
                     
-                    // Detak jantung (spike) setiap interval tertentu
-                    const spikeInterval = canvas.width / (currentBPM / 60 * 3);
-                    const spikePos = x % spikeInterval;
+                    // Generate pola EKG untuk satu detak jantung
+                    const beatPoints = drawECGBeat(ctx, 0, currentBPM);
                     
-                    if (spikePos < 5) {
-                        // Spike EKG
-                        y = centerY - amplitude * (5 - spikePos);
-                    } else if (spikePos < 15) {
-                        // Kembali ke baseline
-                        y = centerY;
-                    } else {
-                        // Gelombang kecil
-                        y = centerY - Math.sin(adjustedPhase * 0.2) * 5;
+                    // Geser data points yang ada ke kiri
+                    const shiftAmount = beatPoints.length;
+                    for (let i = 0; i < dataPoints.length - shiftAmount; i++) {
+                        dataPoints[i] = dataPoints[i + shiftAmount];
                     }
                     
-                    ctx.lineTo(x, y);
+                    // Tambahkan data points baru di akhir
+                    for (let i = 0; i < beatPoints.length; i++) {
+                        const pos = dataPoints.length - shiftAmount + i;
+                        if (pos >= 0 && pos < dataPoints.length) {
+                            dataPoints[pos] = beatPoints[i].y;
+                        }
+                    }
+                }
+                
+                // Gambar garis EKG
+                ctx.beginPath();
+                ctx.moveTo(0, dataPoints[0]);
+                
+                for (let x = 1; x < dataPoints.length; x++) {
+                    ctx.lineTo(x, dataPoints[x]);
                 }
                 
                 ctx.strokeStyle = '#00ccff';
                 ctx.lineWidth = 2;
                 ctx.stroke();
-                
-                phase += speed * 0.5;
             }
             
-            requestAnimationFrame(animateEKG);
+            requestAnimationFrame(animateECG);
         }
         
-        animateEKG();
+        animateECG();
     };
 </script>
 </body>
