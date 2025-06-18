@@ -1,3 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth</title>
+    <style>
+        body {
+            background-color: #001f3f; /* Hitam kebiruan */
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            background-color: #003366; /* Warna latar belakang form */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        input, select {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #00bfff; /* Biru muda menyala */
+            color: #ffffff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0099cc; /* Warna saat hover */
+        }
+        .link {
+            margin-top: 10px;
+            color: #00bfff; /* Biru muda menyala */
+            text-decoration: none;
+        }
+    </style>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+            authDomain: "heartalv-bbb9f.firebaseapp.com",
+            databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "heartalv-bbb9f",
+            storageBucket: "heartalv-bbb9f.firebasestorage.app",
+            messagingSenderId: "419949588771",
+            appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
+            measurementId: "G-8RDRRPGWMW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // Handle registration
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('registerForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const fullName = document.getElementById('fullName').value;
+                const gender = document.getElementById('gender').value;
+                const age = document.getElementById('age').value;
+                const whatsapp = document.getElementById('whatsapp').value;
+
+                if (password !== confirmPassword) {
+                    alert("Password tidak cocok!");
+                    return;
+                }
+
+                try {
+                    await addDoc(collection(db, "users"), {
+                        username,
+                        password,
+                        fullName,
+                        gender,
+                        age,
+                        whatsapp
+                    });
+                    alert("Pendaftaran berhasil!");
+                } catch (error) {
+                    console.error("Error adding document: ", error);
+                }
+            });
+
+            // Handle login
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const loginUsername = document.getElementById('loginUsername').value;
+                const loginPassword = document.getElementById('loginPassword').value;
+
+                const querySnapshot = await getDocs(collection(db, "users"));
+                let userFound = false;
+
+                querySnapshot.forEach((doc) => {
+                    const userData = doc.data();
+                    if (userData.username === loginUsername && userData.password === loginPassword) {
+                        userFound = true;
+                        alert("Login berhasil!");
+                        // Redirect to dashboard
+                        window.location.href = "https://github.com/username/repo/dashboard"; // Ganti dengan URL dashboard Anda
+                    }
+                });
+
+                if (!userFound) {
+                    alert("Username atau password salah!");
+                }
+            });
+
+            // Menangani navigasi antara halaman register dan login
+            const registerSection = document.getElementById('registerSection');
+            const loginSection = document.getElementById('loginSection');
+
+            document.querySelectorAll('.link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (link.getAttribute('href') === '#loginSection') {
+                        registerSection.style.display = 'none';
+                        loginSection.style.display = 'block';
+                    } else {
+                        loginSection.style.display = 'none';
+                        registerSection.style.display = 'block';
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
     <div id="registerSection">
         <h1>Halaman Register</h1>
         <form id="registerForm">
@@ -16,6 +169,7 @@
         </form>
         <a href="#loginSection" class="link">Sudah punya akun? Login di sini</a>
     </div>
+
     <div id="loginSection" style="display: none;">
         <h1>Halaman Login</h1>
         <form id="loginForm">
