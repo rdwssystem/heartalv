@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grafik BPM</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #001f3f; /* Latar belakang hitam kebiruan */
+      color: #00ffff; /* Warna font biru muda */
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #00ffcc; /* Warna judul yang lebih cerah */
+    }
+
+    canvas {
+      background-color: #000;
+      border: 2px solid #0f0;
+      width: 600px; /* Ukuran canvas */
+      height: 300px; /* Ukuran canvas */
+    }
+
+    #backButton {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007f7f; /* Warna tombol */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: monospace;
+    }
+
+    #backButton:hover {
+      background-color: #00ffcc; /* Warna tombol saat hover */
+    }
+
+    .label {
+      color: #00ffff; /* Warna label */
+      font-size: 14px;
+    }
+
+    #chartTitle {
+      margin-top: 10px;
+      font-size: 18px;
+      color: #00ffcc; /* Warna keterangan judul */
+    }
+  </style>
+</head>
+<body>
+  <h1>Grafik Berat Badan</h1>
+  <div id="chartTitle">Diagram 3.3 - Perkembangan Berat Badan (2003-2007)</div>
+  <canvas id="weightCanvas" width="600" height="300"></canvas>
+  <button id="backButton">Kembali ke Dashboard</button>
+
+  <script>
+    // Data berat badan (contoh data, bisa diganti dengan data aktual)
+    const weightData = {
+      labels: ["2003", "2004", "2005", "2006", "2007"],
+      values: [45, 50, 55, 60, 65] // Contoh nilai dalam kg
+    };
+
+    window.onload = function() {
+      const canvas = document.getElementById("weightCanvas");
+      const ctx = canvas.getContext("2d");
+      
+      // Gambar grafik
+      drawWeightChart(ctx, weightData);
+      
+      // Tombol kembali ke dashboard
+      document.getElementById('backButton').addEventListener('click', () => {
+        window.location.href = 'dashboard.html'; // Ganti dengan URL dashboard Anda
+      });
+    };
+
+    function drawWeightChart(ctx, data) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Bersihkan canvas
+
+      // Gambar grid
+      drawGrid(ctx);
+
+      const maxWeight = Math.max(...data.values);
+      const minWeight = Math.min(...data.values);
+      const scaleY = (ctx.canvas.height - 40) / (maxWeight - minWeight); // Skala untuk sumbu Y
+      const scaleX = (ctx.canvas.width - 40) / (data.labels.length - 1); // Skala untuk sumbu X
+
+      // Gambar garis grafik
+      ctx.beginPath();
+      ctx.moveTo(30, ctx.canvas.height - 30 - (data.values[0] - minWeight) * scaleY);
+
+      data.values.forEach((value, index) => {
+        const x = 30 + (index * scaleX);
+        const y = ctx.canvas.height - 30 - (value - minWeight) * scaleY;
+        ctx.lineTo(x, y);
+        
+        // Gambar titik data
+        ctx.fillStyle = "#ff0000"; // Warna titik
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Label nilai
+        ctx.fillStyle = "#00ff00";
+        ctx.fillText(value + " kg", x - 15, y - 10);
+      });
+
+      ctx.strokeStyle = "#00ff00"; // Warna garis
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Label sumbu X (tahun)
+      data.labels.forEach((label, index) => {
+        const x = 30 + (index * scaleX);
+        ctx.fillStyle = "#00ffff";
+        ctx.fillText(label, x - 10, ctx.canvas.height - 10);
+      });
+    }
+
+    function drawGrid(ctx) {
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)'; // Warna grid cyan
+      ctx.lineWidth = 0.5;
+
+      // Gambar garis vertikal
+      for (let x = 30; x <= ctx.canvas.width - 30; x += (ctx.canvas.width - 60) / 4) {
+        ctx.beginPath();
+        ctx.moveTo(x, 30);
+        ctx.lineTo(x, ctx.canvas.height - 30);
+        ctx.stroke();
+      }
+
+      // Gambar garis horizontal
+      for (let y = 30; y <= ctx.canvas.height - 30; y += (ctx.canvas.height - 60) / 5) {
+        ctx.beginPath();
+        ctx.moveTo(30, y);
+        ctx.lineTo(ctx.canvas.width - 30, y);
+        ctx.stroke();
+      }
+
+      // Keterangan sumbu Y (berat badan)
+      const maxWeight = 70; // Maksimum untuk skala
+      for (let i = 0; i <= 5; i++) {
+        const weightValue = Math.round((i * (maxWeight / 5)));
+        ctx.fillStyle = '#00ffff';
+        ctx.fillText(weightValue + " kg", 5, ctx.canvas.height - 30 - (i * ((ctx.canvas.height - 60) / 5)));
+      }
+    }
+  </script>
+</body>
+</html>
