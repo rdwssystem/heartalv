@@ -7,23 +7,23 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, #000000, #003366); /* Gradasi hitam ke biru */
-            color: #ffffff; /* Mengubah warna teks menjadi putih untuk kontras */
+            background: linear-gradient(to bottom, #000000, #003366);
+            color: #ffffff;
             text-align: center;
             padding: 20px;
-            height: 100vh; /* Memastikan body memenuhi seluruh tinggi layar */
-            margin: 0; /* Menghapus margin default */
+            height: 100vh;
+            margin: 0;
         }
         h1 {
-            color: #00ccff; /* Warna biru cerah untuk judul */
+            color: #00ccff;
         }
         #bpm {
             font-size: 2em;
-            color: #00ccff; /* Warna biru cerah untuk BPM */
+            color: #00ccff;
         }
         #ekgCanvas {
-            border: 2px solid #00ccff; /* Border biru cerah untuk canvas */
-            background-color: rgba(255, 255, 255, 0.1); /* Latar belakang canvas transparan */
+            border: 2px solid #00ccff;
+            background-color: rgba(255, 255, 255, 0.1);
             margin-top: 20px;
             position: relative;
         }
@@ -37,23 +37,20 @@
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
             authDomain: "heartalv-bbb9f.firebaseapp.com",
             databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "heartalv-bbb9f",
-            storageBucket: "heartalv-bbb9f.firebasestorage.app",
+            storageBucket: "heartalv-bbb9f.appspot.com",
             messagingSenderId: "419949588771",
             appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
             measurementId: "G-8RDRRPGWMW"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
@@ -61,28 +58,62 @@
         const heartRateRef = ref(database, 'heartRateData/demo-device');
 
         let currentBPM = 0;
+        let lastUpdateTime = 0;
 
         // Mendapatkan data dari Firebase
         onValue(heartRateRef, (snapshot) => {
             const data = snapshot.val();
-            console.log("Data dari Firebase:", data); // Log data untuk debugging
-            if (data !== null) {
-                currentBPM = data; // Simpan nilai BPM saat ini
-                document.getElementById('bpm').innerText = data;
+            console.log("Data dari Firebase:", data);
+            
+            if (data) {
+                // Coba beberapa format data yang mungkin
+                let bpmValue = 0;
+                
+                // Format 1: Data langsung (number)
+                if (typeof data === 'number') {
+                    bpmValue = data;
+                } 
+                // Format 2: Data dengan struktur tanggal-waktu
+                else if (typeof data === 'object') {
+                    // Cari nilai terbaru yang bukan 0
+                    const dates = Object.keys(data).sort().reverse();
+                    for (const date of dates) {
+                        if (typeof data[date] === 'object') {
+                            const times = Object.keys(data[date]).sort().reverse();
+                            for (const time of times) {
+                                if (data[date][time] !== 0) {
+                                    bpmValue = data[date][time];
+                                    break;
+                                }
+                            }
+                        } else if (data[date] !== 0) {
+                            bpmValue = data[date];
+                            break;
+                        }
+                        if (bpmValue !== 0) break;
+                    }
+                }
+                
+                // Update hanya jika ada perubahan
+                if (bpmValue !== currentBPM) {
+                    currentBPM = bpmValue;
+                    document.getElementById('bpm').innerText = currentBPM;
+                    lastUpdateTime = Date.now();
+                }
             } else {
-                document.getElementById('bpm').innerText = "Data tidak tersedia";
+                document.getElementById('bpm').innerText = "0";
+                currentBPM = 0;
             }
         }, (error) => {
             console.error("Error fetching data: ", error);
-            document.getElementById('bpm').innerText = "Error fetching data";
+            document.getElementById('bpm').innerText = "Error";
         });
 
         // Fungsi untuk menggambar grid
         function drawGrid(ctx, width, height) {
-            ctx.strokeStyle = 'rgba(0, 0, 0, 1)'; // Garis grid berwarna hitam
+            ctx.strokeStyle = 'rgba(0, 204, 255, 0.3)';
             ctx.lineWidth = 0.5;
 
-            // Menggambar garis vertikal
             for (let i = 0; i < width; i += 20) {
                 ctx.beginPath();
                 ctx.moveTo(i, 0);
@@ -90,7 +121,6 @@
                 ctx.stroke();
             }
 
-            // Menggambar garis horizontal
             for (let j = 0; j < height; j += 20) {
                 ctx.beginPath();
                 ctx.moveTo(0, j);
@@ -99,53 +129,65 @@
             }
         }
 
-        // Memanggil fungsi untuk menggambar grid saat halaman dimuat
+        // Inisialisasi canvas
         window.onload = function() {
             const canvas = document.getElementById('ekgCanvas');
             const ctx = canvas.getContext('2d');
             drawGrid(ctx, canvas.width, canvas.height);
 
-            // Mengupdate grafik EKG setiap 100 ms
-            setInterval(() => {
-                drawEKG(ctx);
-            }, 100);
+            // Animasi EKG
+            let ekgData = [];
+            let phase = 0;
+            
+            function animateEKG() {
+                // Bersihkan canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid(ctx, canvas.width, canvas.height);
+                
+                // Hitung posisi y berdasarkan BPM
+                const centerY = canvas.height / 2;
+                const amplitude = 30;
+                const speed = 0.05 + (currentBPM / 200); // Kecepatan berdasarkan BPM
+                
+                // Gambar gelombang EKG
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                
+                for (let x = 0; x < canvas.width; x++) {
+                    // Bentuk dasar gelombang EKG
+                    let y = centerY;
+                    
+                    // Modifikasi bentuk berdasarkan BPM
+                    const adjustedPhase = phase + x * speed;
+                    
+                    // Detak jantung (spike)
+                    const spikeInterval = canvas.width / (currentBPM / 60 * 2); // Sesuaikan dengan BPM
+                    const spikePos = x % spikeInterval;
+                    
+                    if (spikePos < 5) {
+                        // Spike EKG
+                        y = centerY - amplitude * (5 - spikePos);
+                    } else if (spikePos < 15) {
+                        // Kembali ke baseline
+                        y = centerY;
+                    } else {
+                        // Gelombang kecil
+                        y = centerY - Math.sin(adjustedPhase * 0.2) * 5;
+                    }
+                    
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = '#00ccff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                phase += speed;
+                requestAnimationFrame(animateEKG);
+            }
+            
+            animateEKG();
         };
-
-        // Fungsi untuk menggambar EKG
-        let ekgData = [];
-        let ekgIndex = 0;
-
-        function drawEKG(ctx) {
-            const canvas = document.getElementById('ekgCanvas');
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Bersihkan canvas
-
-            // Menggambar grid
-            drawGrid(ctx, canvas.width, canvas.height);
-
-            // Logika untuk menggambar EKG
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            
-            // Simulasi data EKG menggunakan nilai BPM
-            const ekgValue = Math.sin(ekgIndex * (Math.PI / 15)) * (currentBPM / 2) + (canvas.height / 2);
-            ekgData.push(ekgValue);
-            ekgIndex++;
-
-            // Log data EKG untuk debugging
-            console.log("Data EKG:", ekgData);
-
-            for (let i = 0; i < ekgData.length; i++) {
-                ctx.lineTo(i, ekgData[i]);
-            }
-            
-            ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // Mengubah warna grafik menjadi putih lebih terang
-            ctx.stroke();
-
-            // Menggeser data EKG untuk animasi
-            if (ekgData.length > canvas.width) {
-                ekgData.shift();
-            }
-        }
     </script>
 </body>
 </html>
