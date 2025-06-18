@@ -28,12 +28,28 @@
       margin-bottom: 10px;
       color: #00ff00;
     }
+
+    #soundToggle {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #00aa00;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: monospace;
+    }
+
+    #soundToggle:hover {
+      background-color: #00ff00;
+    }
   </style>
 </head>
 <body>
   <h1>Realtime EKG BPM Monitor</h1>
   <div id="bpm">BPM: 0</div>
   <canvas id="ekgCanvas" width="800" height="200"></canvas>
+  <button id="soundToggle">Toggle Sound</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -53,6 +69,42 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const heartRateRef = ref(db, "heartRateData/demo-device");
+
+    // Audio context setup
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioContext = new AudioContext();
+    let soundEnabled = true;
+    let lastBeepTime = 0;
+
+    // Setup sound toggle button
+    document.getElementById('soundToggle').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundToggle').textContent = 
+        soundEnabled ? 'Sound: ON' : 'Sound: OFF';
+    });
+
+    function playBeep() {
+      if (!soundEnabled || audioContext.state === 'suspended') return;
+      
+      const now = audioContext.currentTime;
+      if (now - lastBeepTime < 0.1) return; // Prevent overlapping beeps
+      
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 600;
+      gainNode.gain.value = 0.2;
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      oscillator.stop(now + 0.1);
+      
+      lastBeepTime = now;
+    }
 
     let currentBPM = 0;
     let targetBPM = 0;
@@ -79,7 +131,6 @@
           }
         }
       } else {
-        // Only set to 0 if we explicitly receive 0 from Firebase
         if (dataReceived && targetBPM !== 0) {
           targetBPM = 0;
           transitionStartTime = Date.now();
@@ -117,6 +168,7 @@
 
       let ekgData = [];
       let ekgIndex = 0;
+      let lastSpikeTime = 0;
 
       function animateEKG() {
         const now = Date.now();
@@ -131,7 +183,6 @@
 
         const centerY = canvas.height / 2;
 
-        // Show flatline red if no data received at all or if BPM is 0
         if ((!dataReceived && currentBPM === 0) || (dataReceived && targetBPM === 0 && currentBPM === 0)) {
           ctx.beginPath();
           ctx.moveTo(0, centerY);
@@ -144,16 +195,18 @@
         } else {
           // Generate spike pattern
           let spike = 0;
-          const spikePeriod = Math.floor((60 / Math.max(currentBPM, 1)) * 60); // prevent division by 0
+          const spikePeriod = Math.floor((60 / Math.max(currentBPM, 1)) * 60);
+          const isSpiking = (ekgIndex % spikePeriod) < 3;
 
           if (ekgIndex % spikePeriod === 0) {
             spike = -35;
+            playBeep(); // Play beep at the start of each spike
           } else if (ekgIndex % spikePeriod === 1) {
             spike = 40;
           } else if (ekgIndex % spikePeriod === 2) {
             spike = -20;
           } else {
-            spike = (Math.random() - 0.5) * 2; // small noise
+            spike = (Math.random() - 0.5) * 2;
           }
 
           const ekgY = centerY + spike;
@@ -177,6 +230,13 @@
 
         requestAnimationFrame(animateEKG);
       }
+
+      // Handle click-to-start-audio for browsers that require user interaction
+      document.body.addEventListener('click', () => {
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      }, { once: true });
 
       animateEKG();
     };
