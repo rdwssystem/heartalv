@@ -54,10 +54,6 @@
             text-decoration: none;
             display: block;
         }
-        .menu-icon {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
         #notifikasi {
             display: none;
             background: #ffcc00;
@@ -85,10 +81,11 @@
     <div id="notifikasi">Notifikasi akan muncul di sini...</div>
     <audio id="alert-sound" src="sounds/alert.mp3" preload="auto"></audio>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
