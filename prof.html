@@ -36,16 +36,22 @@
         .profile-column {
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            padding: 20px;
-            width: 250px; /* Lebar kolom */
+            padding: 30px; /* Menambah padding untuk tinggi kotak */
+            width: 300px; /* Lebar kolom */
+            height: auto; /* Tinggi kolom otomatis */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: left; /* Mengatur teks rata kiri */
         }
 
         .profile-info {
             font-size: 24px; /* Ukuran font informasi */
-            margin-bottom: 10px;
+            margin-bottom: 15px; /* Jarak antar informasi */
             display: flex;
             justify-content: space-between; /* Menjaga jarak antara label dan nilai */
+        }
+
+        .profile-info span {
+            display: inline-block; /* Memastikan label dan nilai berada dalam satu baris */
         }
 
         button {
@@ -108,8 +114,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Mengambil ID pengguna dari URL atau variabel lain
+        const userId = '7MOQ1n5xY1ZCjQ5piCWD'; // Ganti dengan ID pengguna yang sesuai
+
         // Mengambil data profil pengguna
-        const userId = 'user123'; // Ganti dengan ID pengguna yang sesuai
         const userRef = doc(db, `users/${userId}`);
 
         getDoc(userRef).then((docSnap) => {
@@ -118,7 +126,7 @@
                 document.getElementById('fullName').innerText += data.fullName || 'Tidak tersedia';
                 document.getElementById('gender').innerText += data.gender || 'Tidak tersedia';
                 document.getElementById('age').innerText += data.age || 'Tidak tersedia';
-                document.getElementById('phone').innerText += data.phone || 'Tidak tersedia';
+                document.getElementById('phone').innerText += data.whatsapp || 'Tidak tersedia'; // Menggunakan field whatsapp
             } else {
                 console.log("Data tidak ditemukan");
             }
@@ -127,7 +135,7 @@
         });
 
         document.getElementById('backButton').addEventListener('click', () => {
-            window.location.href = 'dashboard.html'; // Ganti dengan URL dashboard Anda
+            window.location.href = 'dsb.html'; // Ganti dengan URL dashboard Anda
         });
     </script>
 </body>
