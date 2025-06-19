@@ -3,56 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="icon" href="images/favic.png" type="image/png">
+    <link rel="icon" href="images/favic.png" type="image/png">
     <title>DASHBOARD MOVEMIND CONTROL</title>
     <style>
         body {
-            background: linear-gradient(to bottom, #000000, #00bfff); /* Hitam kebiruan */
+            background: linear-gradient(to bottom, #000000, #00bfff);
             color: #ffffff;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Diubah dari center ke flex-start */
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding: 20px; /* Tambahkan padding untuk mobile */
+            padding: 20px;
             box-sizing: border-box;
         }
-        h1 {
-            margin-bottom: 10px;
-            text-align: center; /* Pusatkan judul */
-            width: 100%; /* Pastikan mengambil lebar penuh */
-        }
-        p {
-            margin-bottom: 20px;
-            text-align: center;
-            width: 100%; /* Pastikan mengambil lebar penuh */
-        }
-        .main-icon {
-            font-size: 50px;
-            margin: 10px 0 20px; /* Sesuaikan margin */
+        h1, p, .main-icon {
             text-align: center;
             width: 100%;
         }
+        .main-icon {
+            font-size: 50px;
+            margin: 10px 0 20px;
+        }
         .menu {
             display: flex;
-            flex-wrap: wrap; /* Untuk responsif di mobile */
+            flex-wrap: wrap;
             justify-content: center;
             width: 100%;
             max-width: 600px;
             margin-top: 20px;
-            gap: 10px; /* Jarak antar menu item */
+            gap: 10px;
         }
         .menu-item {
             background-color: #003366;
             padding: 15px;
             border-radius: 8px;
             text-align: center;
-            flex: 1 1 120px; /* Fleksibel tapi minimal 120px */
-            min-width: 120px; /* Lebar minimal untuk mobile */
+            flex: 1 1 120px;
+            min-width: 120px;
             transition: background-color 0.3s;
-            margin: 5px; /* Jarak antar item */
+            margin: 5px;
         }
         .menu-item:hover {
             background-color: #00bfff;
@@ -63,65 +55,139 @@
             display: block;
         }
         .menu-icon {
-            font-size: 30px; /* Ukuran ikon menu lebih kecil */
+            font-size: 30px;
             margin-bottom: 10px;
         }
-        
-        /* Media query untuk tampilan mobile */
         @media (max-width: 480px) {
             body {
                 padding: 15px;
                 justify-content: flex-start;
             }
             h1 {
-                font-size: 1.5rem; /* Ukuran font lebih kecil di mobile */
+                font-size: 1.5rem;
                 margin-top: 10px;
             }
             .main-icon {
-                font-size: 60px; /* Ukuran ikon utama lebih kecil di mobile */
+                font-size: 60px;
                 margin: 5px 0 15px;
             }
-            .menu {
-                flex-direction: row; /* Tetap dalam baris */
-                flex-wrap: wrap;
-            }
             .menu-item {
-                flex: 1 1 40%; /* Dua kolom di mobile */
+                flex: 1 1 40%;
                 padding: 12px;
             }
+        }
+        #notifikasi {
+            display: none;
+            background: #ffcc00;
+            color: #000;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            max-width: 90%;
         }
     </style>
 </head>
 <body>
     <h1>DASHBOARD MOVEMIND CONTROL</h1>
     <p>"Move and Remind Your Body"<br>Pantau gerak kecil, Raih perubahan besar. Pengingat cerdas untuk tubuh aktif.</p>
-    <div class="main-icon">❤️</div> <!-- Ikon hati utama -->
-
+    <div class="main-icon">❤️</div>
     <div class="menu">
-        <div class="menu-item">
-            <a href="ekg.html">
-                <div class="menu-icon">❤️</div>
-                <p>Heart Rate</p>
-            </a>
-        </div>
-        <div class="menu-item">
-            <a href="grapic.html">
-                <div class="menu-icon">📊</div>
-                <p>Graphic</p>
-            </a>
-        </div>
-        <div class="menu-item">
-            <a href="prog.html">
-                <div class="menu-icon">📈</div>
-                <p>Progress</p>
-            </a>
-        </div>
-        <div class="menu-item">
-            <a href="prof.html">
-                <div class="menu-icon">👤</div>
-                <p>Profile</p>
-            </a>
-        </div>
+        <div class="menu-item"><a href="ekg.html"><div class="menu-icon">❤️</div><p>Heart Rate</p></a></div>
+        <div class="menu-item"><a href="grapic.html"><div class="menu-icon">📊</div><p>Graphic</p></a></div>
+        <div class="menu-item"><a href="prog.html"><div class="menu-icon">📈</div><p>Progress</p></a></div>
+        <div class="menu-item"><a href="prof.html"><div class="menu-icon">👤</div><p>Profile</p></a></div>
     </div>
+
+    <div id="notifikasi">Notifikasi akan muncul di sini...</div>
+    <audio id="alert-sound" src="sounds/alert.mp3" preload="auto"></audio>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+
+        let userAge = null;
+        let deviceId = "demo-device"; // Ganti jika perlu
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                const userId = user.uid;
+                db.collection("users").doc(userId).get().then((doc) => {
+                    if (doc.exists) {
+                        userAge = doc.data().usia;
+                        listenBPM(deviceId);
+                    }
+                });
+            }
+        });
+
+        function listenBPM(deviceId) {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const path = `/heartRateData/${deviceId}/${dateStr}`;
+
+            rtdb.ref(path).on('value', (snapshot) => {
+                const data = snapshot.val();
+                const bpmHistory = [];
+                for (let time in data) {
+                    bpmHistory.push({ time: time, value: data[time] });
+                }
+                checkCondition(userAge, bpmHistory);
+            });
+        }
+
+        function checkCondition(age, bpmData) {
+            if (!age || bpmData.length < 2) return;
+
+            let bpmRange = [0, 0];
+            if (age >= 5 && age <= 14) bpmRange = [60, 100];
+            else if (age >= 15 && age <= 24) bpmRange = [60, 95];
+            else if (age >= 25 && age <= 44) bpmRange = [60, 90];
+            else if (age >= 45 && age <= 60) bpmRange = [60, 85];
+
+            const now = new Date();
+            const recentData = bpmData.filter(item => {
+                const [h, m] = item.time.split(":").map(Number);
+                const dataTime = new Date(now);
+                dataTime.setHours(h, m, 0, 0);
+                return (now - dataTime) <= 300000; // 5 menit
+            });
+
+            const isStable = recentData.every(item =>
+                item.value >= bpmRange[0] && item.value <= bpmRange[1]);
+
+            if (isStable && recentData.length >= 3) {
+                triggerNotification();
+            }
+        }
+
+        function triggerNotification() {
+            const notif = document.getElementById("notifikasi");
+            notif.innerText = "Lakukan aktivitas ringan selama 5 menit! Kamu bisa berjalan-jalan santai, naik turun tangga, ataupun peregangan.";
+            notif.style.display = "block";
+            const sound = document.getElementById("alert-sound");
+            sound.play();
+            setTimeout(() => {
+                sound.pause();
+                sound.currentTime = 0;
+                notif.style.display = "none";
+            }, 5000);
+        }
+    </script>
 </body>
 </html>
