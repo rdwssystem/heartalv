@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-     <link rel="icon" href="images/favic.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Halaman Profil</title>
     <style>
@@ -99,6 +98,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
@@ -114,29 +114,36 @@
         // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
-        // Mengambil ID pengguna dari URL atau variabel lain
-        const userId = '7MOQ1n5xY1ZCjQ5piCWD'; // Ganti dengan ID pengguna yang sesuai
+        // Mendapatkan ID pengguna yang sedang login
+        const user = auth.currentUser ;
 
-        // Mengambil data profil pengguna
-        const userRef = doc(db, `users/${userId}`);
+        if (user) {
+            const userId = user.uid; // Mengambil ID pengguna yang sedang login
 
-        getDoc(userRef).then((docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('fullName').innerText += data.fullName || 'Tidak tersedia';
-                document.getElementById('gender').innerText += data.gender || 'Tidak tersedia';
-                document.getElementById('age').innerText += data.age || 'Tidak tersedia';
-                document.getElementById('phone').innerText += data.whatsapp || 'Tidak tersedia'; // Menggunakan field whatsapp
-            } else {
-                console.log("Data tidak ditemukan");
-            }
-        }).catch((error) => {
-            console.error("Error getting document:", error);
-        });
+            // Mengambil data profil pengguna
+            const userRef = doc(db, `users/${userId}`);
+
+            getDoc(userRef).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('fullName').innerText += data.fullName || 'Tidak tersedia';
+                    document.getElementById('gender').innerText += data.gender || 'Tidak tersedia';
+                    document.getElementById('age').innerText += data.age || 'Tidak tersedia';
+                    document.getElementById('phone').innerText += data.whatsapp || 'Tidak tersedia'; // Menggunakan field whatsapp
+                } else {
+                    console.log("Data tidak ditemukan");
+                }
+            }).catch((error) => {
+                console.error("Error getting document:", error);
+            });
+        } else {
+            console.log("Pengguna tidak terautentikasi");
+        }
 
         document.getElementById('backButton').addEventListener('click', () => {
-            window.location.href = 'dsb.html'; // Ganti dengan URL dashboard Anda
+            window.location.href = 'dashboard.html'; // Ganti dengan URL dashboard Anda
         });
     </script>
 </body>
