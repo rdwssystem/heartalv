@@ -110,20 +110,23 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const userId = user.uid;
-                const userDocRef = doc(db, "users", userId);
+                const userId = user.uid; // Ambil UID pengguna yang terautentikasi
+                console.log("User  ID:", userId); // Log UID untuk debugging
+                const userDocRef = doc(db, "users", userId); // Referensi ke dokumen pengguna
+
                 getDoc(userDocRef).then((doc) => {
                     if (doc.exists()) {
-                        userAge = doc.data().age; // Pastikan field ini sesuai dengan Firestore
-                        listenBPM(deviceId);
+                        userAge = doc.data().age; // Ambil data usia
+                        console.log("User  Age:", userAge); // Log usia untuk debugging
+                        listenBPM(deviceId); // Panggil fungsi untuk mendengarkan BPM
                     } else {
-                        console.log("Dokumen tidak ditemukan");
+                        console.log("Dokumen tidak ditemukan"); // Jika dokumen tidak ada
                     }
                 }).catch((error) => {
-                    console.error("Error getting document:", error);
+                    console.error("Error getting document:", error); // Tangani kesalahan
                 });
             } else {
-                console.log("Pengguna tidak terautentikasi");
+                console.log("Pengguna tidak terautentikasi"); // Jika tidak ada pengguna yang terautentikasi
             }
         });
 
