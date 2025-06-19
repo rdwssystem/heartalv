@@ -103,9 +103,8 @@
         const firebaseConfig = {
             apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
             authDomain: "heartalv-bbb9f.firebaseapp.com",
-            databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "heartalv-bbb9f",
-            storageBucket: "heartalv-bbb9f.firebasestorage.app",
+            storageBucket: "heartalv-bbb9f.appspot.com",
             messagingSenderId: "419949588771",
             appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
             measurementId: "G-8RDRRPGWMW"
@@ -121,6 +120,7 @@
 
         if (user) {
             const userId = user.uid; // Mengambil ID pengguna yang sedang login
+            console.log("ID Pengguna:", userId); // Log ID pengguna
 
             // Mengambil data profil pengguna
             const userRef = doc(db, `users/${userId}`);
@@ -128,6 +128,7 @@
             getDoc(userRef).then((docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    console.log("Data Pengguna:", data); // Log data pengguna
                     document.getElementById('fullName').innerText += data.fullName || 'Tidak tersedia';
                     document.getElementById('gender').innerText += data.gender || 'Tidak tersedia';
                     document.getElementById('age').innerText += data.age || 'Tidak tersedia';
@@ -139,11 +140,12 @@
                 console.error("Error getting document:", error);
             });
         } else {
-            console.log("Pengguna tidak terautentikasi");
+            alert("Anda harus login untuk mengakses halaman ini.");
+            window.location.href = 'login.html'; // Ganti dengan URL halaman login Anda
         }
 
         document.getElementById('backButton').addEventListener('click', () => {
-            window.location.href = 'dsb.html'; // Ganti dengan URL dashboard Anda
+            window.location.href = 'dashboard.html'; // Ganti dengan URL dashboard Anda
         });
     </script>
 </body>
