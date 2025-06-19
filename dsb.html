@@ -134,13 +134,13 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userId = user.uid; // Ambil UID pengguna yang terautentikasi
-                console.log("User   ID:", userId); // Log UID untuk debugging
+                console.log("User    ID:", userId); // Log UID untuk debugging
                 const userDocRef = doc(db, "users", userId); // Referensi ke dokumen pengguna
 
                 getDoc(userDocRef).then((doc) => {
                     if (doc.exists()) {
                         userAge = doc.data().age; // Ambil data usia
-                        console.log("User   Age:", userAge); // Log usia untuk debugging
+                        console.log("User    Age:", userAge); // Log usia untuk debugging
                         listenBPM(deviceId); // Panggil fungsi untuk mendengarkan BPM
                     } else {
                         console.log("Dokumen tidak ditemukan untuk UID:", userId); // Jika dokumen tidak ada
@@ -187,7 +187,7 @@
                 const [h, m] = item.time.split(":").map(Number);
                 const dataTime = new Date(now);
                 dataTime.setHours(h, m, 0, 0);
-                return (now - dataTime) <= 60000; // 5 menit
+                return (now - dataTime) <= 300000; // 5 menit
             });
 
             const isStable = recentData.every(item =>
