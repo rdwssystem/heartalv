@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-     <link rel="icon" href="images/favic.png" type="image/png">
+    <link rel="icon" href="images/favic.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REGISTERALV</title>
     <style>
@@ -122,6 +122,8 @@
                     if (userData.username === loginUsername && userData.password === loginPassword) {
                         userFound = true;
                         alert("Login berhasil!");
+                        // Simpan ID pengguna di localStorage
+                        localStorage.setItem('userId', doc.id);
                         // Redirect to dashboard
                         window.location.href = "dsb.html"; // Ganti dengan URL dashboard Anda
                     }
