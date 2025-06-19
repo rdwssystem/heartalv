@@ -120,7 +120,7 @@
                         console.log("User  Age:", userAge); // Log usia untuk debugging
                         listenBPM(deviceId); // Panggil fungsi untuk mendengarkan BPM
                     } else {
-                        console.log("Dokumen tidak ditemukan"); // Jika dokumen tidak ada
+                        console.log("Dokumen tidak ditemukan untuk UID:", userId); // Jika dokumen tidak ada
                     }
                 }).catch((error) => {
                     console.error("Error getting document:", error); // Tangani kesalahan
