@@ -58,24 +58,6 @@
             font-size: 30px;
             margin-bottom: 10px;
         }
-        @media (max-width: 480px) {
-            body {
-                padding: 15px;
-                justify-content: flex-start;
-            }
-            h1 {
-                font-size: 1.5rem;
-                margin-top: 10px;
-            }
-            .main-icon {
-                font-size: 60px;
-                margin: 5px 0 15px;
-            }
-            .menu-item {
-                flex: 1 1 40%;
-                padding: 12px;
-            }
-        }
         #notifikasi {
             display: none;
             background: #ffcc00;
@@ -109,14 +91,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
     <script>
         const firebaseConfig = {
-           apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
+            apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
             authDomain: "heartalv-bbb9f.firebaseapp.com",
             databaseURL: "https://heartalv-bbb9f-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "heartalv-bbb9f",
             storageBucket: "heartalv-bbb9f.firebasestorage.app",
             messagingSenderId: "419949588771",
-            appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96",
-            measurementId: "G-8RDRRPGWMW"
+            appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -130,10 +111,16 @@
                 const userId = user.uid;
                 db.collection("users").doc(userId).get().then((doc) => {
                     if (doc.exists) {
-                        userAge = doc.data().usia;
+                        userAge = doc.data().age; // Pastikan field ini sesuai dengan Firestore
                         listenBPM(deviceId);
+                    } else {
+                        console.log("Dokumen tidak ditemukan");
                     }
+                }).catch((error) => {
+                    console.error("Error getting document:", error);
                 });
+            } else {
+                console.log("Pengguna tidak terautentikasi");
             }
         });
 
@@ -145,10 +132,14 @@
             rtdb.ref(path).on('value', (snapshot) => {
                 const data = snapshot.val();
                 const bpmHistory = [];
-                for (let time in data) {
-                    bpmHistory.push({ time: time, value: data[time] });
+                if (data) {
+                    for (let time in data) {
+                        bpmHistory.push({ time: time, value: data[time] });
+                    }
+                    checkCondition(userAge, bpmHistory);
+                } else {
+                    console.log("Data tidak ditemukan untuk path:", path);
                 }
-                checkCondition(userAge, bpmHistory);
             });
         }
 
