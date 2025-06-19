@@ -166,7 +166,7 @@
                 const [h, m] = item.time.split(":").map(Number);
                 const dataTime = new Date(now);
                 dataTime.setHours(h, m, 0, 0);
-                return (now - dataTime) <= 300000; // 5 menit
+                return (now - dataTime) <= 60000; // 5 menit
             });
 
             const isStable = recentData.every(item =>
