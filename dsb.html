@@ -81,12 +81,14 @@
     <div id="notifikasi">Notifikasi akan muncul di sini...</div>
     <audio id="alert-sound" src="sounds/alert.mp3" preload="auto"></audio>
 
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
-    
-    <script>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
             authDomain: "heartalv-bbb9f.firebaseapp.com",
@@ -96,18 +98,22 @@
             messagingSenderId: "419949588771",
             appId: "1:419949588771:web:d0b4a4d2b3b2312b505c96"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const rtdb = firebase.database();
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const rtdb = getDatabase(app);
 
         let userAge = null;
         let deviceId = "demo-device"; // Ganti jika perlu
 
-        firebase.auth().onAuthStateChanged((user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userId = user.uid;
-                db.collection("users").doc(userId).get().then((doc) => {
-                    if (doc.exists) {
+                const userDocRef = doc(db, "users", userId);
+                getDoc(userDocRef).then((doc) => {
+                    if (doc.exists()) {
                         userAge = doc.data().age; // Pastikan field ini sesuai dengan Firestore
                         listenBPM(deviceId);
                     } else {
@@ -126,7 +132,8 @@
             const dateStr = today.toISOString().split('T')[0];
             const path = `/heartRateData/${deviceId}/${dateStr}`;
 
-            rtdb.ref(path).on('value', (snapshot) => {
+            const bpmRef = ref(rtdb, path);
+            onValue(bpmRef, (snapshot) => {
                 const data = snapshot.val();
                 const bpmHistory = [];
                 if (data) {
