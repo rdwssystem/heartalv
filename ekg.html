@@ -22,6 +22,8 @@
     canvas {
       background-color: #000;
       border: 2px solid #0f0;
+      width: 700px; /* Ukuran lebar canvas diubah */
+      height: 500px; /* Ukuran tinggi canvas diubah */
     }
 
     #bpm {
@@ -49,7 +51,7 @@
 <body>
   <h1>Realtime EKG BPM Monitor</h1>
   <div id="bpm">BPM: 0</div>
-  <canvas id="ekgCanvas" width="600" height="150"></canvas> <!-- Ukuran canvas diubah -->
+  <canvas id="ekgCanvas" width="700" height="400"></canvas> <!-- Ukuran canvas diubah -->
   <button id="soundToggle">Toggle Sound</button>
   <button id="backButton">Kembali ke Dashboard</button> <!-- Tombol Kembali ke Dashboard -->
 
@@ -85,7 +87,7 @@
         soundEnabled ? 'Sound: ON' : 'Sound: OFF';
     });
 
-    // Tombol kembali ke dashboardsb
+    // Tombol kembali ke dashboard
     document.getElementById('backButton').addEventListener('click', () => {
       window.location.href = 'dsb.html'; // Ganti dengan URL dashboard Anda
     });
