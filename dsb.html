@@ -84,8 +84,8 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUser WithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
         // Firebase configuration
@@ -108,16 +108,39 @@
         let userAge = null;
         let deviceId = "demo-device"; // Ganti jika perlu
 
+        // Fungsi untuk mendaftar pengguna baru
+        function registerUser (email, password, age, fullName, gender, username, whatsapp) {
+            createUser WithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    // Buat dokumen pengguna di Firestore
+                    return setDoc(doc(db, "users", user.uid), {
+                        age: age,
+                        fullName: fullName,
+                        gender: gender,
+                        username: username,
+                        whatsapp: whatsapp
+                    });
+                })
+                .then(() => {
+                    console.log("Dokumen pengguna berhasil dibuat");
+                })
+                .catch((error) => {
+                    console.error("Error during registration:", error);
+                });
+        }
+
+        // Memeriksa status autentikasi pengguna
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userId = user.uid; // Ambil UID pengguna yang terautentikasi
-                console.log("User  ID:", userId); // Log UID untuk debugging
+                console.log("User   ID:", userId); // Log UID untuk debugging
                 const userDocRef = doc(db, "users", userId); // Referensi ke dokumen pengguna
 
                 getDoc(userDocRef).then((doc) => {
                     if (doc.exists()) {
                         userAge = doc.data().age; // Ambil data usia
-                        console.log("User  Age:", userAge); // Log usia untuk debugging
+                        console.log("User   Age:", userAge); // Log usia untuk debugging
                         listenBPM(deviceId); // Panggil fungsi untuk mendengarkan BPM
                     } else {
                         console.log("Dokumen tidak ditemukan untuk UID:", userId); // Jika dokumen tidak ada
