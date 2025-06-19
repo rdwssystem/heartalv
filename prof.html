@@ -115,20 +115,16 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Mendapatkan ID pengguna yang sedang login
-        const user = auth.currentUser ;
+        // Mendapatkan ID pengguna dari localStorage
+        const userId = localStorage.getItem('userId');
 
-        if (user) {
-            const userId = user.uid; // Mengambil ID pengguna yang sedang login
-            console.log("ID Pengguna:", userId); // Log ID pengguna
-
+        if (userId) {
             // Mengambil data profil pengguna
             const userRef = doc(db, `users/${userId}`);
 
             getDoc(userRef).then((docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    console.log("Data Pengguna:", data); // Log data pengguna
                     document.getElementById('fullName').innerText += data.fullName || 'Tidak tersedia';
                     document.getElementById('gender').innerText += data.gender || 'Tidak tersedia';
                     document.getElementById('age').innerText += data.age || 'Tidak tersedia';
