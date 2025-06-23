@@ -5,9 +5,10 @@
     <link rel="icon" href="images/favic.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REGISTERALV</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(to right, blue, white); /* Hitam kebiruan */
+            background: linear-gradient(to right, #4a90e2, #ffffff); /* Warna latar belakang yang lebih lembut */
             color: #ffffff;
             font-family: Arial, sans-serif;
             display: flex;
@@ -17,47 +18,79 @@
             height: 100vh;
             margin: 0;
         }
+
         h1 {
             margin-bottom: 20px;
         }
+
         form {
-            background-color: #003366; /* Warna latar belakang form */
+            background-color: #003366;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
         }
+
         input, select {
             margin: 10px 0;
             padding: 10px;
-            width: 100%;
+            width: calc(100% - 20px); /* Mengurangi lebar untuk padding */
             border: none;
             border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative; /* Menambahkan posisi relatif untuk ikon */
         }
+
+        input:focus {
+            border: 2px solid #00bfff;
+        }
+
         button {
-            background-color: #00bfff; /* Biru muda menyala */
+            background-color: #00bfff;
             color: #ffffff;
             padding: 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             width: 100%;
+            transition: background-color 0.3s ease;
         }
+
         button:hover {
-            background-color: #0099cc; /* Warna saat hover */
+            background-color: #0099cc;
         }
+
         .link {
             margin-top: 10px;
-            color: #00bfff; /* Biru muda menyala */
+            color: #000000; /* Mengubah warna tulisan menjadi hitam */
             text-decoration: none;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .password-container i {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #000000; /* Mengubah warna ikon mata menjadi hitam */
+        }
+
+        @media (max-width: 600px) {
+            form {
+                width: 95%;
+            }
         }
     </style>
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-analytics.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA3VtggZ3POaniiW29w0a9hxpdL8tsT_B8",
             authDomain: "heartalv-bbb9f.firebaseapp.com",
@@ -69,16 +102,27 @@
             measurementId: "G-8RDRRPGWMW"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
 
-        // Handle registration
         document.addEventListener('DOMContentLoaded', () => {
+            const togglePasswordVisibility = (inputId) => {
+                const input = document.getElementById(inputId);
+                const icon = document.getElementById(inputId + 'Icon');
+                if (input.type === "password") {
+                    input.type = "text";
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = "password";
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            };
+
             document.getElementById('registerForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
@@ -107,10 +151,8 @@
                 }
             });
 
-            // Handle login
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
                 const loginUsername = document.getElementById('loginUsername').value;
                 const loginPassword = document.getElementById('loginPassword').value;
 
@@ -122,10 +164,8 @@
                     if (userData.username === loginUsername && userData.password === loginPassword) {
                         userFound = true;
                         alert("Login berhasil!");
-                        // Simpan ID pengguna di localStorage
                         localStorage.setItem('userId', doc.id);
-                        // Redirect to dashboard
-                        window.location.href = "dsb.html"; // Ganti dengan URL dashboard Anda
+                        window.location.href = "dsb.html";
                     }
                 });
 
@@ -134,7 +174,6 @@
                 }
             });
 
-            // Menangani navigasi antara halaman register dan login
             const registerSection = document.getElementById('registerSection');
             const loginSection = document.getElementById('loginSection');
 
@@ -158,8 +197,14 @@
         <h1>Halaman Register</h1>
         <form id="registerForm">
             <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <input type="password" id="confirmPassword" placeholder="Konfirmasi Password" required>
+            <div class="password-container">
+                <input type="password" id="password" placeholder="Password" required>
+                <i id="passwordIcon" class="fas fa-eye" onclick="togglePasswordVisibility('password')"></i>
+            </div>
+            <div class="password-container">
+                <input type="password" id="confirmPassword" placeholder="Konfirmasi Password" required>
+                <i id="confirmPasswordIcon" class="fas fa-eye" onclick="togglePasswordVisibility('confirmPassword')"></i>
+            </div>
             <input type="text" id="fullName" placeholder="Nama Lengkap" required>
             <select id="gender" required>
                 <option value="">Pilih Jenis Kelamin</option>
@@ -177,7 +222,10 @@
         <h1>Halaman Login</h1>
         <form id="loginForm">
             <input type="text" id="loginUsername" placeholder="Username" required>
-            <input type="password" id="loginPassword" placeholder="Password" required>
+            <div class="password-container">
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <i id="loginPasswordIcon" class="fas fa-eye" onclick="togglePasswordVisibility('loginPassword')"></i>
+            </div>
             <button type="submit">Login</button>
         </form>
         <a href="#registerSection" class="link">Belum punya akun? Daftar di sini</a>
